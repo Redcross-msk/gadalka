@@ -6,10 +6,20 @@ const PROTECTED = ["/platform", "/game", "/shop"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const secret = process.env.AUTH_SECRET ?? "gadalka-dev-secret-change-me-32";
+
+  // На HTTPS Auth.js ставит `__Secure-authjs.session-token`.
+  // Без secureCookie getToken ищет другое имя → null → редирект на / (клики «ничего не делают»).
+  const forwardedProto = req.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  const secureCookie =
+    forwardedProto === "https" ||
+    (forwardedProto == null && req.nextUrl.protocol === "https:") ||
+    process.env.NODE_ENV === "production";
 
   const token = await getToken({
     req,
-    secret: process.env.AUTH_SECRET ?? "gadalka-dev-secret-change-me-32",
+    secret,
+    secureCookie,
   });
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {

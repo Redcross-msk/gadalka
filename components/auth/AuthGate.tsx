@@ -123,7 +123,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <div className={cn(showGate && "pointer-events-none select-none blur-[2px] opacity-40")}>
+      <div className={cn(showGate && "select-none blur-[2px] opacity-40")}>
         {children}
       </div>
 
