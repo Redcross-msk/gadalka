@@ -1,7 +1,7 @@
 "use client";
 
+import { useCallback, useRef, useState, Suspense } from "react";
 import Link from "next/link";
-import { Suspense } from "react";
 import { motion } from "framer-motion";
 import { AuthGate } from "@/components/auth/AuthGate";
 
@@ -120,21 +120,193 @@ function DesktopGate() {
   );
 }
 
-/** Мобилка: обычные ссылки, без свайпа — тап всегда ведёт в раздел */
-function MobileLinks() {
+/** Мобилка: колода со свайпом; тап по центру — переход (без блокировки клика) */
+function MobileCarousel() {
+  const [index, setIndex] = useState(0);
+  const [dragPx, setDragPx] = useState(0);
+  const touchRef = useRef<{ x: number; y: number; dragging: boolean } | null>(null);
+  const swipedRef = useRef(false);
+  const lockRef = useRef(false);
+  const n = cards.length;
+
+  const goTo = useCallback(
+    (next: number) => {
+      const wrapped = ((next % n) + n) % n;
+      setIndex(wrapped);
+      setDragPx(0);
+    },
+    [n]
+  );
+
+  const relativeOffset = (i: number) => {
+    let d = i - index;
+    if (d > n / 2) d -= n;
+    if (d < -n / 2) d += n;
+    return d;
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    touchRef.current = { x: t.clientX, y: t.clientY, dragging: false };
+    swipedRef.current = false;
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    const start = touchRef.current;
+    if (!start) return;
+    const t = e.touches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    // Высокий порог: лёгкий тап не считается свайпом
+    if (!start.dragging && Math.abs(dx) > 36 && Math.abs(dx) > Math.abs(dy) * 1.35) {
+      start.dragging = true;
+      swipedRef.current = true;
+    }
+    if (start.dragging) {
+      setDragPx(dx);
+    }
+  };
+
+  const onTouchEnd = () => {
+    const start = touchRef.current;
+    const dx = dragPx;
+    const wasDrag = Boolean(start?.dragging);
+    touchRef.current = null;
+    if (!wasDrag) {
+      setDragPx(0);
+      return;
+    }
+    if (lockRef.current) {
+      setDragPx(0);
+      return;
+    }
+    if (dx < -72) {
+      lockRef.current = true;
+      goTo(index + 1);
+      setTimeout(() => {
+        lockRef.current = false;
+        swipedRef.current = false;
+      }, 380);
+    } else if (dx > 72) {
+      lockRef.current = true;
+      goTo(index - 1);
+      setTimeout(() => {
+        lockRef.current = false;
+        swipedRef.current = false;
+      }, 380);
+    } else {
+      setDragPx(0);
+      setTimeout(() => {
+        swipedRef.current = false;
+      }, 50);
+    }
+  };
+
   return (
-    <div className="relative z-10 flex w-full flex-col items-center gap-4 sm:hidden px-4 pb-8">
-      <p className="mb-2 text-[10px] uppercase tracking-[0.32em] text-gold/55">Выберите путь</p>
-      {cards.map((card) => (
-        <Link
-          key={card.href}
-          href={card.href}
-          className="relative block h-[min(28vh,220px)] w-full max-w-[320px] [perspective:1200px] touch-manipulation"
-          aria-label={card.label}
-        >
-          <CardFaces label={card.label} hint={card.hint} faceUp />
-        </Link>
-      ))}
+    <div className="relative z-10 flex w-full flex-col items-center sm:hidden px-2">
+      <p className="mb-6 text-[10px] uppercase tracking-[0.32em] text-gold/55">Выберите путь</p>
+
+      <div
+        className="relative h-[min(58vh,420px)] w-full max-w-[360px]"
+        style={{ perspective: "1400px" }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
+      >
+        {cards.map((card, i) => {
+          const offset = relativeOffset(i);
+          const isCenter = offset === 0;
+          const isSide = Math.abs(offset) === 1;
+          if (!isCenter && !isSide) return null;
+
+          const xPx = offset * 118 + (isCenter ? dragPx * 0.85 : dragPx * 0.35);
+          const scale = isCenter ? 1 : 0.76;
+          const z = isCenter ? 40 : 10;
+          const opacity = isCenter ? 1 : 0.7;
+          const rotateYTilt = offset * -14;
+
+          return (
+            <motion.div
+              key={card.href}
+              className="absolute left-1/2 top-1/2"
+              initial={false}
+              animate={{
+                x: xPx,
+                scale,
+                opacity,
+                rotateY: rotateYTilt,
+                zIndex: z,
+              }}
+              transition={
+                Math.abs(dragPx) > 0
+                  ? { duration: 0 }
+                  : { type: "spring", stiffness: 280, damping: 30 }
+              }
+              style={{
+                width: "min(70vw, 250px)",
+                height: "min(50vh, 370px)",
+                marginLeft: "calc(min(70vw, 250px) / -2)",
+                marginTop: "calc(min(50vh, 370px) / -2)",
+                transformStyle: "preserve-3d",
+              }}
+            >
+              {isCenter ? (
+                <Link
+                  href={card.href}
+                  className="block h-full w-full rounded-2xl touch-manipulation"
+                  aria-label={`Открыть раздел ${card.label}`}
+                  onClick={(e) => {
+                    // Блокируем переход только после реального свайпа
+                    if (swipedRef.current || Math.abs(dragPx) > 24 || lockRef.current) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  <CardFaces label={card.label} hint={card.hint} faceUp />
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="block h-full w-full rounded-2xl touch-manipulation border-0 bg-transparent p-0"
+                  aria-label={`Выбрать ${card.label}`}
+                  onClick={() => {
+                    if (swipedRef.current || Math.abs(dragPx) > 24) return;
+                    goTo(i);
+                  }}
+                >
+                  <CardFaces label={card.label} hint={card.hint} faceUp={false} />
+                </button>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
+
+      <div className="mt-5 flex items-center gap-2">
+        {cards.map((card, i) => (
+          <button
+            key={card.href}
+            type="button"
+            onClick={() => goTo(i)}
+            className="h-2 rounded-full transition-all touch-manipulation"
+            style={{
+              width: i === index ? 22 : 8,
+              background: i === index ? "#d8bc78" : "rgba(216,188,120,0.28)",
+            }}
+            aria-label={card.label}
+          />
+        ))}
+      </div>
+
+      <Link
+        href={cards[index].href}
+        className="mt-5 flex min-h-[44px] items-center justify-center rounded-full border border-gold/40 bg-gold/10 px-6 text-xs uppercase tracking-[0.2em] text-gold touch-manipulation"
+      >
+        Войти · {cards[index].label}
+      </Link>
+
+      <p className="mt-3 text-[11px] text-mist/50 tracking-wide">Свайп влево/вправо · тап по карте</p>
     </div>
   );
 }
@@ -149,7 +321,7 @@ export default function HomePage() {
       }
     >
       <AuthGate>
-        <div className="fixed inset-0 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-[#302a30] touch-manipulation">
+        <div className="fixed inset-0 flex items-center justify-center overflow-hidden bg-[#302a30] touch-manipulation">
           <div
             className="pointer-events-none absolute inset-0"
             aria-hidden
@@ -160,12 +332,12 @@ export default function HomePage() {
           />
 
           <motion.div
-            className="relative z-10 flex w-full items-center justify-center py-8"
+            className="relative z-10 flex w-full items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8 }}
           >
-            <MobileLinks />
+            <MobileCarousel />
             <DesktopGate />
           </motion.div>
         </div>
