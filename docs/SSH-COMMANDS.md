@@ -21,10 +21,10 @@ cd /opt
 git clone https://github.com/ВАШ_ЛОГИН/gadalka.git gadalka
 cd gadalka
 
-# === 4. Caddy: домен ===
-sed -i 's/YOUR_DOMAIN\.ru/YOUR_DOMAIN.ru/g' Caddyfile
-# ↑ замените второй YOUR_DOMAIN.ru на реальный домен, например:
-# sed -i 's/YOUR_DOMAIN\.ru/gadalka.ru/g' Caddyfile
+# === 4. Caddy: домен (пример для gadalka.ru — замените на свой) ===
+# nano Caddyfile   ← или одной командой:
+DOMAIN="gadalka.ru"   # ← ваш домен
+sed -i "s/YOUR_DOMAIN\\.ru/${DOMAIN}/g" Caddyfile
 cat Caddyfile
 
 # === 5. Секреты ===
