@@ -1,8 +1,10 @@
-# Основной вход — www (сертификат уже есть). Корень редиректим на www.
+# www — основной вход (сертификат уже есть)
 www.xn--80aaakgo7a.xn--p1ai {
 	reverse_proxy app:3000
 }
 
-xn--80aaakgo7a.xn--p1ai {
+# Корень: только HTTP-редирект на www.
+# Без TLS — иначе Caddy долбит Let's Encrypt, пока у @ нет A-записи.
+http://xn--80aaakgo7a.xn--p1ai {
 	redir https://www.xn--80aaakgo7a.xn--p1ai{uri} permanent
 }
