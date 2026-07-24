@@ -43,7 +43,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "443:443/udp"
+      # без 443/udp — отключаем HTTP/3 (Safari на iPhone часто ломается)
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

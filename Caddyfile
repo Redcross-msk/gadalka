@@ -1,10 +1,15 @@
-# www — основной вход (сертификат уже есть)
+{
+	# Safari на iPhone часто падает на HTTP/3 (QUIC) — только h1/h2
+	servers {
+		protocols h1 h2
+	}
+}
+
 www.xn--80aaakgo7a.xn--p1ai {
 	reverse_proxy app:3000
 }
 
-# Корень: только HTTP-редирект на www.
-# Без TLS — иначе Caddy долбит Let's Encrypt, пока у @ нет A-записи.
+# Корень без TLS: иначе Caddy долбит Let's Encrypt без A-записи @
 http://xn--80aaakgo7a.xn--p1ai {
 	redir https://www.xn--80aaakgo7a.xn--p1ai{uri} permanent
 }
