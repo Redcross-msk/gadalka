@@ -1,0 +1,313 @@
+@import "tailwindcss";
+
+@theme {
+  /* Светлая тёплая атмосфера — без чёрно-фиолетового */
+  --color-background: #2a2428;
+  --color-foreground: #f7f2ea;
+  --color-card: #363038;
+  --color-card-foreground: #f7f2ea;
+  --color-popover: #3c3640;
+  --color-popover-foreground: #f7f2ea;
+  --color-primary: #d8bc78;
+  --color-primary-foreground: #2a2428;
+  --color-secondary: #433c44;
+  --color-secondary-foreground: #f0e8dc;
+  --color-muted: #3a343c;
+  --color-muted-foreground: #c4b8aa;
+  --color-accent: #6b3d4c;
+  --color-accent-foreground: #f7f2ea;
+  --color-destructive: #b0485c;
+  --color-destructive-foreground: #f7f2ea;
+  --color-border: #524a52;
+  --color-input: #3a343c;
+  --color-ring: #d8bc78;
+  --color-gold: #d8bc78;
+  --color-gold-light: #f2dfa8;
+  --color-burgundy: #7a4050;
+  --color-burgundy-light: #955868;
+  --color-purple-deep: #4a4058;
+  --color-purple-muted: #5a5068;
+  --color-graphite: #2e282c;
+  --color-graphite-light: #3a343c;
+  --color-cream: #f7f2ea;
+  --color-cream-muted: #d4c8ba;
+  --color-mist: #d0c4b8;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --font-serif: var(--font-display), "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-body), "Manrope", system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01" on, "cv11" on;
+    background-color: #2e282c;
+    background-image:
+      radial-gradient(ellipse 90% 55% at 50% 0%, rgba(216, 188, 120, 0.09) 0%, transparent 55%),
+      linear-gradient(180deg, #353038 0%, #2e282c 50%, #2a2428 100%);
+    min-height: 100dvh;
+    letter-spacing: 0.01em;
+    overflow-x: clip;
+    overscroll-behavior-y: contain;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: pan-x pan-y;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-wrap: balance;
+  }
+
+  img, svg, video, canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  a, button, [role="button"], input, select, textarea, label {
+    touch-action: manipulation;
+  }
+
+  ::selection {
+    background: rgba(216, 188, 120, 0.3);
+    color: #f7f2ea;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+}
+
+@layer utilities {
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-gold-light via-gold to-gold-light bg-clip-text text-transparent;
+  }
+
+  .glass-card {
+    background: linear-gradient(
+      145deg,
+      rgba(72, 64, 74, 0.75) 0%,
+      rgba(52, 46, 56, 0.58) 100%
+    );
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(216, 188, 120, 0.2);
+    box-shadow:
+      0 16px 40px rgba(0, 0, 0, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+
+  .glow-gold {
+    box-shadow:
+      0 0 24px rgba(216, 188, 120, 0.2),
+      0 12px 36px rgba(0, 0, 0, 0.18);
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 24px rgba(122, 64, 80, 0.22), 0 12px 36px rgba(0, 0, 0, 0.16);
+  }
+
+  .decorative-line {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .card-back-surface {
+    background-color: #302a30;
+    background-image:
+      radial-gradient(ellipse 70% 40% at 50% -5%, rgba(216, 188, 120, 0.1) 0%, transparent 58%),
+      linear-gradient(180deg, #383238 0%, #302a30 55%, #2c262c 100%);
+  }
+
+  .scene-3d {
+    perspective: 1200px;
+  }
+
+  .lift-3d {
+    transition:
+      transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.4s ease,
+      border-color 0.3s ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .lift-3d {
+      will-change: transform;
+    }
+
+    .lift-3d:hover {
+      transform: translateY(-5px);
+      box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.22),
+        0 0 0 1px rgba(216, 188, 120, 0.2);
+    }
+  }
+
+  .nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.35rem 0.25rem;
+    background: none !important;
+    border: none;
+    outline: none;
+    box-shadow: none;
+  }
+
+  .nav-link:focus-visible .nav-link-text {
+    color: #f2dfa8;
+  }
+
+  .nav-link-text {
+    font-family: var(--font-serif);
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(212, 200, 186, 0.55);
+    text-shadow:
+      0 0 8px rgba(208, 196, 184, 0.55),
+      0 0 18px rgba(208, 196, 184, 0.35);
+    opacity: 0.8;
+    transition:
+      color 0.25s ease,
+      opacity 0.25s ease,
+      letter-spacing 0.25s ease,
+      text-shadow 0.25s ease,
+      transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .nav-link:hover .nav-link-text,
+  .nav-link[data-active="true"] .nav-link-text {
+    color: #f2dfa8;
+    opacity: 1;
+    letter-spacing: 0.22em;
+    text-shadow:
+      0 0 6px rgba(216, 188, 120, 0.5),
+      0 0 16px rgba(216, 188, 120, 0.25);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link:hover .nav-link-text {
+      transform: translateX(5px);
+    }
+  }
+
+  .flip-card {
+    perspective: 1000px;
+  }
+
+  .flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    transform-style: preserve-3d;
+  }
+
+  .flip-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 0.75rem;
+  }
+
+  .flip-card-back {
+    transform: rotateY(180deg);
+  }
+
+  /* Десктоп: переворот по hover. Мобилка: статичная плитка без 3D */
+  @media (hover: hover) and (pointer: fine) {
+    .flip-card-inner {
+      will-change: transform;
+    }
+
+    .flip-card:hover .flip-card-inner,
+    .flip-card:focus-within .flip-card-inner {
+      transform: rotateY(180deg);
+    }
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    .flip-card {
+      perspective: none;
+    }
+
+    .flip-card-inner {
+      transform: none !important;
+      transform-style: flat;
+    }
+
+    .flip-card-face:not(.flip-card-back) {
+      display: none;
+    }
+
+    .flip-card-back {
+      position: relative;
+      transform: none;
+      backface-visibility: visible;
+      -webkit-backface-visibility: visible;
+    }
+  }
+
+  .safe-pb {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+
+  .section-mobile {
+    scroll-margin-top: 1rem;
+  }
+
+  .game-smoke {
+    background: linear-gradient(
+      to top,
+      rgba(42, 34, 38, 0.6) 0%,
+      transparent 100%
+    );
+    animation: game-smoke-drift 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes game-smoke-drift {
+    0% { opacity: 0.2; transform: translateY(0); }
+    100% { opacity: 0.35; transform: translateY(-8px); }
+  }
+
+  .game-shell {
+    --game-paper: #f0e4d4;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .game-smoke {
+      animation: none;
+    }
+
+    .lift-3d,
+    .flip-card-inner {
+      transition: none !important;
+    }
+  }
+}

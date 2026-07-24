@@ -1,0 +1,9 @@
+# TLS (Let's Encrypt). Перед запуском замените YOUR_DOMAIN.ru на ваш домен.
+# DNS A-записи @ и www должны указывать на IP этого сервера.
+YOUR_DOMAIN.ru {
+	reverse_proxy app:3000
+}
+
+www.YOUR_DOMAIN.ru {
+	redir https://YOUR_DOMAIN.ru{uri} permanent
+}

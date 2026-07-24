@@ -1,0 +1,606 @@
+// Гадалка — production schema (UUID, enums, media, game + shop + platform)
+// Паттерн как в МОСКАСТИНГ: PostgreSQL + Prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth & profile ───────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum AppTheme {
+  DARK
+  WARM
+  MYSTIC
+}
+
+enum UserDirection {
+  PLATFORM
+  GAME
+  SHOP
+}
+
+enum SubscriptionPlan {
+  FREE
+  PLUS
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  EXPIRED
+  TRIAL
+}
+
+enum ZodiacSign {
+  ARIES
+  TAURUS
+  GEMINI
+  CANCER
+  LEO
+  VIRGO
+  LIBRA
+  SCORPIO
+  SAGITTARIUS
+  CAPRICORN
+  AQUARIUS
+  PISCES
+}
+
+enum DreamMood {
+  PEACEFUL
+  ANXIOUS
+  MYSTERIOUS
+  JOYFUL
+  SAD
+  NEUTRAL
+}
+
+enum ProductCategory {
+  CARDS
+  CANDLES
+  ACCESSORIES
+  GIFT_SETS
+  BOARD_GAMES
+  DIGITAL
+}
+
+enum ProductStatus {
+  DRAFT
+  IN_STOCK
+  PREORDER
+  DIGITAL
+  ARCHIVED
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING
+  PAID
+  FULFILLED
+  CANCELED
+  REFUNDED
+}
+
+enum MediaKind {
+  AVATAR
+  PRODUCT
+  PRODUCT_GALLERY
+  BANNER
+  CONTENT
+  TAROT_CARD
+  SYMBOL
+  SPREAD
+  COURSE
+  PROGRAM
+  OTHER
+}
+
+enum MediaOwnerType {
+  USER
+  PRODUCT
+  BANNER
+  CONTENT
+  SYSTEM
+  ORDER
+}
+
+enum InterpreterMode {
+  DREAM
+  SPREAD
+  SYMBOL
+  QUESTION
+  TAROT
+}
+
+enum ActivationBonusType {
+  PREMIUM_DAYS
+  DECK
+  PROGRAM
+  ENERGY
+  CUSTOM
+}
+
+model User {
+  id           String     @id @default(uuid())
+  email        String     @unique
+  passwordHash String
+  role         UserRole   @default(USER)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  lastLoginAt  DateTime?
+
+  profile      Profile?
+  subscription Subscription?
+  dreams       Dream[]
+  spreads      SpreadSession[]
+  dailyCards   DailyCardSave[]
+  eveningLogs  EveningEntry[]
+  favorites    FavoriteCard[]
+  notes        Note[]
+  chats        ChatSession[]
+  cartItems    CartItem[]
+  orders       Order[]
+  activations  ActivationRedemption[]
+  gameSave     GameSave?
+  achievements UserAchievement[]
+  courseProg   CourseProgress[]
+  programProg  ProgramProgress[]
+  symbolObs    SymbolObservation[]
+  media        MediaAsset[]           @relation("UserUploads")
+  auditLogs    AuditLog[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Profile {
+  id                 String         @id @default(uuid())
+  userId             String         @unique
+  user               User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName        String
+  avatarMediaId      String?
+  avatarMedia        MediaAsset?    @relation("ProfileAvatar", fields: [avatarMediaId], references: [id], onDelete: SetNull)
+  level              Int            @default(1)
+  interests          String[]       @default([])
+  direction          UserDirection  @default(PLATFORM)
+  theme              AppTheme       @default(DARK)
+  onboardingComplete Boolean        @default(false)
+  zodiacSign         ZodiacSign?
+  birthDate          DateTime?      @db.Date
+  birthTime          String?
+  birthPlace         String?
+  bio                String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+model Subscription {
+  id        String             @id @default(uuid())
+  userId    String             @unique
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      SubscriptionPlan   @default(FREE)
+  status    SubscriptionStatus @default(ACTIVE)
+  startsAt  DateTime           @default(now())
+  endsAt    DateTime?
+  source    String? // "manual" | "activation" | "payment"
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@index([plan, status])
+}
+
+// ─── Media (картинки товаров, баннеры, аватары, контент) ──────
+
+model MediaAsset {
+  id           String         @id @default(uuid())
+  kind         MediaKind      @default(OTHER)
+  ownerType    MediaOwnerType @default(SYSTEM)
+  ownerId      String?
+  url          String // /uploads/... или CDN
+  path         String? // локальный путь на диске
+  mimeType     String?
+  width        Int?
+  height       Int?
+  sizeBytes    Int?
+  alt          String?
+  sortOrder    Int            @default(0)
+  uploadedById String?
+  uploadedBy   User?          @relation("UserUploads", fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  profileAvatars Profile[]  @relation("ProfileAvatar")
+  products       Product[]  @relation("ProductCover")
+  productGallery ProductImage[]
+  banners        Banner[]
+
+  @@index([ownerType, ownerId])
+  @@index([kind])
+}
+
+model Banner {
+  id        String      @id @default(uuid())
+  title     String
+  subtitle  String?
+  href      String?
+  placement String // home | shop | platform | game
+  mediaId   String?
+  media     MediaAsset? @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  active    Boolean     @default(true)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  sortOrder Int         @default(0)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@index([placement, active])
+}
+
+// ─── Platform: dreams, spreads, daily ─────────────────────────
+
+model Dream {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  dreamDate    DateTime   @db.Date
+  mood         DreamMood  @default(NEUTRAL)
+  characters   String[]   @default([])
+  places       String[]   @default([])
+  symbols      String[]   @default([])
+  recurring    Boolean    @default(false)
+  personalNote String     @default("")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  analysis DreamAnalysis?
+
+  @@index([userId, dreamDate])
+  @@index([userId, createdAt])
+}
+
+/// Анализ сна — считается из текста/символов/настроения и сохраняется
+model DreamAnalysis {
+  id           String   @id @default(uuid())
+  dreamId      String   @unique
+  dream        Dream    @relation(fields: [dreamId], references: [id], onDelete: Cascade)
+  summary      String
+  emotions     String[] @default([])
+  foundSymbols String[] @default([])
+  themes       String[] @default([])
+  questions    String[] @default([])
+  toneScore    Int? // -100..100 для аналитики
+  rawMeta      Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SpreadSession {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spreadSlug     String
+  question       String   @default("")
+  cards          Json // [{ positionId, cardSlug }]
+  interpretation String   @default("")
+  isFree         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([spreadSlug])
+}
+
+model DailyCardSave {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardSlug     String
+  dateKey      String // YYYY-MM-DD
+  theme        String
+  question     String
+  shortMeaning String
+  fullMeaning  String
+  zodiacSign   String?
+  savedAt      DateTime @default(now())
+
+  @@unique([userId, dateKey])
+  @@index([userId, savedAt])
+}
+
+model EveningEntry {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateKey      String
+  whatHappened String
+  cardMatched  Boolean  @default(false)
+  thoughts     String   @default("")
+  createdAt    DateTime @default(now())
+
+  @@index([userId, dateKey])
+}
+
+model FavoriteCard {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardSlug  String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, cardSlug])
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  tags      String[] @default([])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
+}
+
+model SymbolObservation {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbolSlug  String
+  note        String   @default("")
+  observedAt  DateTime @default(now())
+
+  @@index([userId, symbolSlug])
+}
+
+model CourseProgress {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseSlug      String
+  completedLessons String[] @default([])
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  @@unique([userId, courseSlug])
+}
+
+model ProgramProgress {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programSlug      String
+  completedStages  String[] @default([])
+  startedAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([userId, programSlug])
+}
+
+// ─── Interpreter chat ─────────────────────────────────────────
+
+model ChatSession {
+  id        String          @id @default(uuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mode      InterpreterMode
+  title     String
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  messages ChatMessage[]
+
+  @@index([userId, mode, updatedAt])
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String // user | assistant
+  content   String
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId, createdAt])
+}
+
+// ─── Shop ─────────────────────────────────────────────────────
+
+model Product {
+  id                String         @id @default(uuid())
+  slug              String         @unique
+  name              String
+  description       String
+  priceCents        Int
+  category          ProductCategory
+  status            ProductStatus  @default(DRAFT)
+  digitalBonus      String?
+  composition       String?
+  characteristics   Json?
+  platformConnection String?
+  relatedCards      String[]       @default([])
+  coverMediaId      String?
+  coverMedia        MediaAsset?    @relation("ProductCover", fields: [coverMediaId], references: [id], onDelete: SetNull)
+  stock             Int?
+  sortOrder         Int            @default(0)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  images   ProductImage[]
+  reviews  ProductReview[]
+  cartItems CartItem[]
+  orderItems OrderItem[]
+
+  @@index([category, status])
+  @@index([status, sortOrder])
+}
+
+model ProductImage {
+  id        String     @id @default(uuid())
+  productId String
+  product   Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  mediaId   String
+  media     MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  sortOrder Int        @default(0)
+
+  @@index([productId, sortOrder])
+}
+
+model ProductReview {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  author    String
+  rating    Int
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([productId, createdAt])
+}
+
+model CartItem {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity    Int      @default(1)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model Order {
+  id           String      @id @default(uuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status       OrderStatus @default(PENDING)
+  totalCents   Int
+  currency     String      @default("RUB")
+  contactEmail String?
+  contactPhone String?
+  shippingAddr String?
+  meta         Json?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  items OrderItem[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+model OrderItem {
+  id           String  @id @default(uuid())
+  orderId      String
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product @relation(fields: [productId], references: [id])
+  productName  String
+  unitCents    Int
+  quantity     Int
+  digitalBonus String?
+}
+
+model ActivationCode {
+  id         String              @id @default(uuid())
+  code       String              @unique
+  bonusType  ActivationBonusType
+  bonusValue String // JSON or plain
+  maxUses    Int                 @default(1)
+  usedCount  Int                 @default(0)
+  expiresAt  DateTime?
+  active     Boolean             @default(true)
+  createdAt  DateTime            @default(now())
+
+  redemptions ActivationRedemption[]
+}
+
+model ActivationRedemption {
+  id        String         @id @default(uuid())
+  codeId    String
+  code      ActivationCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now())
+
+  @@unique([codeId, userId])
+  @@index([userId])
+}
+
+// ─── Game (idle) ──────────────────────────────────────────────
+
+/// Полный сейв idle-игры + индексируемые поля для лидербордов / аналитики
+model GameSave {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  level            Int      @default(1)
+  energy           Float    @default(0)
+  prestigeCount    Int      @default(0)
+  tarotCenterLevel Int      @default(0)
+  loginStreak      Int      @default(1)
+  state            Json // полный GameState
+  lastTickAt       DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([level])
+  @@index([energy])
+}
+
+model UserAchievement {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  unlockedAt    DateTime @default(now())
+  claimed       Boolean  @default(false)
+
+  @@unique([userId, achievementId])
+}
+
+// ─── Ops ──────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String?
+  entityId  String?
+  meta      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+}
+
+model FreeSpreadCooldown {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  lastAt    DateTime
+  updatedAt DateTime @updatedAt
+}
