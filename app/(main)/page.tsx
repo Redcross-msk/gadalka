@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState, Suspense } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { AuthGate } from "@/components/auth/AuthGate";
 
@@ -121,10 +122,11 @@ function DesktopGate() {
 }
 
 function MobileCarousel() {
+  const router = useRouter();
   const [index, setIndex] = useState(0);
   const [dragPx, setDragPx] = useState(0);
   const touchRef = useRef<{ x: number; y: number; dragging: boolean } | null>(null);
-  const swipedRef = useRef(false);
+  const movedRef = useRef(false);
   const lockRef = useRef(false);
   const n = cards.length;
 
@@ -147,7 +149,7 @@ function MobileCarousel() {
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0];
     touchRef.current = { x: t.clientX, y: t.clientY, dragging: false };
-    swipedRef.current = false;
+    movedRef.current = false;
   };
 
   const onTouchMove = (e: React.TouchEvent) => {
@@ -156,9 +158,10 @@ function MobileCarousel() {
     const t = e.touches[0];
     const dx = t.clientX - start.x;
     const dy = t.clientY - start.y;
-    if (!start.dragging && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+    // Порог выше, чтобы лёгкий тап не считался свайпом
+    if (!start.dragging && Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy) * 1.2) {
       start.dragging = true;
-      swipedRef.current = true;
+      movedRef.current = true;
     }
     if (start.dragging) {
       setDragPx(dx);
@@ -168,8 +171,9 @@ function MobileCarousel() {
   const onTouchEnd = () => {
     const start = touchRef.current;
     const dx = dragPx;
+    const wasDrag = Boolean(start?.dragging);
     touchRef.current = null;
-    if (!start?.dragging) {
+    if (!wasDrag) {
       setDragPx(0);
       return;
     }
@@ -182,16 +186,24 @@ function MobileCarousel() {
       goTo(index + 1);
       setTimeout(() => {
         lockRef.current = false;
+        movedRef.current = false;
       }, 350);
     } else if (dx > 64) {
       lockRef.current = true;
       goTo(index - 1);
       setTimeout(() => {
         lockRef.current = false;
+        movedRef.current = false;
       }, 350);
     } else {
       setDragPx(0);
+      movedRef.current = false;
     }
+  };
+
+  const openCenter = () => {
+    if (movedRef.current || Math.abs(dragPx) > 20 || lockRef.current) return;
+    router.push(cards[index].href);
   };
 
   return (
@@ -244,26 +256,21 @@ function MobileCarousel() {
               }}
             >
               {isCenter ? (
-                <Link
-                  href={card.href}
-                  className="block h-full w-full rounded-2xl touch-manipulation"
+                <button
+                  type="button"
+                  className="block h-full w-full rounded-2xl touch-manipulation cursor-pointer border-0 bg-transparent p-0"
                   aria-label={`Открыть раздел ${card.label}`}
-                  onClick={(e) => {
-                    if (swipedRef.current || Math.abs(dragPx) > 14) {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }
-                  }}
+                  onClick={openCenter}
                 >
                   <CardFaces label={card.label} hint={card.hint} faceUp />
-                </Link>
+                </button>
               ) : (
                 <button
                   type="button"
-                  className="block h-full w-full rounded-2xl touch-manipulation"
+                  className="block h-full w-full rounded-2xl touch-manipulation border-0 bg-transparent p-0"
                   aria-label={`Выбрать ${card.label}`}
                   onClick={() => {
-                    if (swipedRef.current || Math.abs(dragPx) > 14) return;
+                    if (movedRef.current || Math.abs(dragPx) > 20) return;
                     goTo(i);
                   }}
                 >
@@ -291,7 +298,15 @@ function MobileCarousel() {
         ))}
       </div>
 
-      <p className="mt-4 text-[11px] text-mist/50 tracking-wide">Свайп влево или вправо · тап — войти</p>
+      <button
+        type="button"
+        onClick={openCenter}
+        className="mt-5 min-h-[44px] rounded-full border border-gold/40 bg-gold/10 px-6 text-xs uppercase tracking-[0.2em] text-gold touch-manipulation"
+      >
+        Войти · {cards[index].label}
+      </button>
+
+      <p className="mt-3 text-[11px] text-mist/50 tracking-wide">Свайп влево/вправо или кнопка ниже</p>
     </div>
   );
 }

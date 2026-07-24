@@ -1,9 +1,8 @@
-# TLS (Let's Encrypt). Перед запуском замените YOUR_DOMAIN.ru на ваш домен.
-# DNS A-записи @ и www должны указывать на IP этого сервера.
-YOUR_DOMAIN.ru {
+# Основной вход — www (сертификат уже есть). Корень редиректим на www.
+www.xn--80aaakgo7a.xn--p1ai {
 	reverse_proxy app:3000
 }
 
-www.YOUR_DOMAIN.ru {
-	redir https://YOUR_DOMAIN.ru{uri} permanent
+xn--80aaakgo7a.xn--p1ai {
+	redir https://www.xn--80aaakgo7a.xn--p1ai{uri} permanent
 }
