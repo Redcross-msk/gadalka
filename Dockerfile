@@ -10,6 +10,8 @@ FROM node:20-bookworm-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# public может отсутствовать в контексте — создаём до build
+RUN mkdir -p public/uploads/placeholders
 ENV NEXT_TELEMETRY_DISABLED=1
 # Next build импортирует env.ts — нужны валидные плейсхолдеры на этапе сборки
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"

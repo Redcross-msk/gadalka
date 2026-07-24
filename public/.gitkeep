@@ -1,0 +1,1 @@
+# keep public/ in git & Docker build context
