@@ -1,8 +1,11 @@
 import { PlatformNav } from "@/components/layout/PlatformNav";
 import { ScrollAtmosphere } from "@/components/platform/ScrollAtmosphere";
 import { LEGAL_DISCLAIMER } from "@/lib/utils";
+import { requireUser } from "@/lib/require-user";
 
-export default function PlatformLayout({ children }: { children: React.ReactNode }) {
+export default async function PlatformLayout({ children }: { children: React.ReactNode }) {
+  await requireUser("/platform");
+
   return (
     <div className="relative min-h-dvh min-w-0 overflow-x-clip card-back-surface">
       <ScrollAtmosphere />

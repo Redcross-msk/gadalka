@@ -4,7 +4,10 @@
 	}
 }
 
-# Оба хоста → приложение (когда @ и www смотрят на VPS)
 www.xn--80aaakgo7a.xn--p1ai, xn--80aaakgo7a.xn--p1ai {
-	reverse_proxy app:3000
+	encode gzip
+	reverse_proxy app:3000 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
 }
