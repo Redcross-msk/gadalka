@@ -1,5 +1,6 @@
 import type { NatalChart, ZodiacSign } from "@/types";
 import { getTodayHoroscope, getZodiacName, zodiacSigns } from "./horoscopes";
+import { zodiacConstellations } from "./zodiacConstellationStars";
 
 export type ConstellationStar = {
   id: string;
@@ -7,6 +8,9 @@ export type ConstellationStar = {
   y: number;
   size: number;
   label?: string;
+  name?: string;
+  title?: string;
+  ageMillionYears?: number;
 };
 
 export type ConstellationInfo = {
@@ -236,8 +240,64 @@ export function getZodiacFromDate(dateStr: string): ZodiacSign | null {
   return "pisces";
 }
 
+function extraStarPosition(index: number, total: number): { x: number; y: number; size: number } {
+  const angle = (index / Math.max(total, 1)) * Math.PI * 2 - Math.PI / 2;
+  const radius = 26 + (index % 4) * 6;
+  return {
+    x: Math.round((50 + Math.cos(angle) * radius) * 10) / 10,
+    y: Math.round((50 + Math.sin(angle) * radius) * 10) / 10,
+    size: 1.8 + (index % 3) * 0.35,
+  };
+}
+
 export function getConstellation(sign: ZodiacSign): ConstellationInfo {
-  return { sign, ...constellationData[sign] };
+  const base = constellationData[sign];
+  const catalog = zodiacConstellations[sign]?.stars ?? [];
+
+  if (!catalog.length) {
+    return { sign, ...base };
+  }
+
+  const stars: ConstellationStar[] = catalog.map((meta, i) => {
+    const baseStar = base.stars[i];
+    const pos = baseStar
+      ? { x: baseStar.x, y: baseStar.y, size: baseStar.size }
+      : extraStarPosition(i, catalog.length);
+
+    return {
+      id: meta.id,
+      x: pos.x,
+      y: pos.y,
+      size: pos.size,
+      label: meta.name,
+      name: meta.name,
+      title: meta.title,
+      ageMillionYears: meta.ageMillionYears,
+    };
+  });
+
+  const idByOld = new Map(base.stars.map((s, i) => [s.id, stars[i]?.id ?? s.id]));
+  const lines: [string, string][] = base.lines
+    .map(([from, to]) => [idByOld.get(from), idByOld.get(to)] as [string | undefined, string | undefined])
+    .filter((pair): pair is [string, string] => Boolean(pair[0] && pair[1]));
+
+  // Дополнительные звёзды мягко соединяем с ближайшей «опорной» звездой фигуры
+  const backbone = stars.slice(0, base.stars.length);
+  for (let i = base.stars.length; i < stars.length; i++) {
+    const star = stars[i];
+    let nearest = backbone[0];
+    let best = Infinity;
+    for (const b of backbone) {
+      const d = (b.x - star.x) ** 2 + (b.y - star.y) ** 2;
+      if (d < best) {
+        best = d;
+        nearest = b;
+      }
+    }
+    if (nearest) lines.push([nearest.id, star.id]);
+  }
+
+  return { sign, ...base, stars, lines };
 }
 
 function lifePathNumber(dateStr: string): number {

@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
-import { Check, Lock } from "lucide-react";
+import { Check } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { PageHeader, SectionHeader } from "@/components/layout/PageHeader";
 import { LockedContent } from "@/components/shared/LockedContent";
+import { AccessBadge } from "@/components/shared/AccessBadge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -85,11 +86,7 @@ export default function CourseDetailPage() {
       />
 
       <PageHeader title={course.name} description={course.description}>
-        {course.premium ? (
-          <Badge variant="premium"><Lock className="h-3 w-3 mr-1" />Премиум</Badge>
-        ) : (
-          <Badge variant="free">Бесплатно</Badge>
-        )}
+        <AccessBadge requiresPremium={course.premium} freeLabel="Бесплатно" />
       </PageHeader>
 
       <div className="mb-8">

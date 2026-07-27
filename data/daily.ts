@@ -39,8 +39,9 @@ export function getDailyCard(zodiacSign?: ZodiacSign) {
     };
   }
 
-  const dayIndex = new Date().getDate() % tarotCards.length;
-  const card = tarotCards[dayIndex];
+  const majors = tarotCards.filter((c) => c.arcana === "major");
+  const dayIndex = new Date().getDate() % majors.length;
+  const card = majors[dayIndex] ?? tarotCards[0];
   return {
     cardSlug: card.slug,
     date: today,

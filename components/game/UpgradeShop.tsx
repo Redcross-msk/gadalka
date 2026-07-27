@@ -68,12 +68,12 @@ function UpgradeIcon({ id, level, locked }: { id: string; level: number; locked:
 function effectPreview(objId: string, level: number): string {
   const next = level + 1;
   if (objId === "sign_book") {
-    const cur = 1 + Math.max(0, level - 1) * 0.55;
-    const nxt = 1 + Math.max(0, next - 1) * 0.55;
+    const cur = 1 + Math.max(0, level - 1) * 0.7;
+    const nxt = 1 + Math.max(0, next - 1) * 0.7;
     return `клик ×${cur.toFixed(2)} → ×${nxt.toFixed(2)}`;
   }
   if (objId === "deck") {
-    return `клик +${(level * 12).toFixed(0)}% → +${(next * 12).toFixed(0)}%`;
+    return `клик +${(level * 15).toFixed(0)}% → +${(next * 15).toFixed(0)}%`;
   }
   if (objId === "candle") {
     const cur = level > 0 ? 1 + (level - 1) * 0.85 : 0;
@@ -116,6 +116,11 @@ export function UpgradeShop() {
         <div className="flex items-center gap-2 mb-3">
           <Crown className="h-4 w-4 text-gold" />
           <h3 className="font-serif text-lg text-gold/90">Гадалка+</h3>
+          {isPremiumDemo && (
+            <span className="rounded-full border border-green-500/30 bg-green-500/10 px-2 py-0.5 text-[10px] font-medium text-green-400">
+              Доступно
+            </span>
+          )}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {premium.map((obj) => {

@@ -8,6 +8,8 @@ interface ObjProps {
   className?: string;
   onClick?: () => void;
   active?: boolean;
+  /** Комбо ≥ 1000 — книга раскрыта */
+  opened?: boolean;
 }
 
 function frame(level: number) {
@@ -17,72 +19,117 @@ function frame(level: number) {
   return 0.9;
 }
 
-export function GameBook({ level = 1, locked, className, onClick, active }: ObjProps) {
+export function GameBook({ level = 1, locked, className, onClick, active, opened }: ObjProps) {
   const glow = locked ? 0 : 0.25 + Math.min(level, 20) * 0.02;
+  const uid = `gb-${level}-${opened ? "o" : "c"}`;
+
   return (
-    <button
-      type="button"
+    <div
+      role={onClick ? "button" : undefined}
       onClick={onClick}
-      disabled={locked}
       className={cn(
         "select-none touch-manipulation transition-[filter] duration-150",
         active && "brightness-110",
         className
       )}
       aria-label="Книга знаков"
+      aria-disabled={locked || undefined}
     >
       <svg
-        viewBox="0 0 120 140"
+        viewBox="0 0 140 130"
         className={cn(
-          "w-full h-full drop-shadow-[0_18px_28px_rgba(0,0,0,0.45)] transition-transform duration-150 ease-out",
-          active && "scale-[0.97]"
+          "w-full h-full drop-shadow-[0_18px_28px_rgba(0,0,0,0.45)] transition-transform duration-200 ease-out",
+          active && "scale-[0.97]",
+          opened && !locked && "scale-[1.02]"
         )}
       >
         <defs>
-          <linearGradient id="bookCover" x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id={`${uid}-cover`} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#5a3844" />
             <stop offset="55%" stopColor="#3a242c" />
             <stop offset="100%" stopColor="#24161c" />
           </linearGradient>
-          <linearGradient id="bookShine" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(242,223,168,0.22)" />
-            <stop offset="40%" stopColor="rgba(242,223,168,0)" />
+          <linearGradient id={`${uid}-page`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#f3e6c8" />
+            <stop offset="100%" stopColor="#dcc9a0" />
           </linearGradient>
-          <filter id="bookGlow">
-            <feGaussianBlur stdDeviation={glow * 4} result="b" />
+          <linearGradient id={`${uid}-shine`} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(242,223,168,0.28)" />
+            <stop offset="45%" stopColor="rgba(242,223,168,0)" />
+          </linearGradient>
+          <filter id={`${uid}-glow`}>
+            <feGaussianBlur stdDeviation={glow * (opened ? 5 : 4)} result="b" />
             <feMerge>
               <feMergeNode in="b" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
         </defs>
-        <rect
-          x="18"
-          y="16"
-          width="84"
-          height="108"
-          rx="4"
-          fill="url(#bookCover)"
-          stroke="#d8bc78"
-          strokeWidth={frame(level)}
-          opacity={locked ? 0.35 : 1}
-          filter={locked ? undefined : "url(#bookGlow)"}
-        />
-        <rect x="18" y="16" width="84" height="108" rx="4" fill="url(#bookShine)" opacity={locked ? 0 : 1} />
-        <rect x="28" y="26" width="64" height="88" rx="2" fill="none" stroke="#d8bc78" strokeWidth="0.7" opacity="0.45" />
-        <circle cx="60" cy="70" r="16" fill="none" stroke="#d8bc78" strokeWidth="1.2" opacity={locked ? 0.2 : 0.8} />
-        <line x1="60" y1="54" x2="60" y2="86" stroke="#d8bc78" strokeWidth="0.8" opacity="0.7" />
-        <line x1="46" y1="70" x2="74" y2="70" stroke="#d8bc78" strokeWidth="0.8" opacity="0.7" />
-        {level >= 5 && <circle cx="60" cy="70" r="8" fill="none" stroke="#d8bc78" strokeWidth="0.6" opacity="0.5" />}
-        {level >= 10 && (
-          <path d="M36 34 L42 34 M78 34 L84 34 M36 106 L42 106 M78 106 L84 106" stroke="#d8bc78" strokeWidth="1" />
+
+        {opened && !locked ? (
+          <>
+            {/* Раскрытая книга — две страницы */}
+            <ellipse cx="70" cy="118" rx="52" ry="6" fill="rgba(0,0,0,0.28)" />
+            <path
+              d="M70 22 L22 30 L18 112 Q44 120 70 114 Z"
+              fill={`url(#${uid}-page)`}
+              stroke="#d8bc78"
+              strokeWidth="1"
+              filter={`url(#${uid}-glow)`}
+            />
+            <path
+              d="M70 22 L118 30 L122 112 Q96 120 70 114 Z"
+              fill={`url(#${uid}-page)`}
+              stroke="#d8bc78"
+              strokeWidth="1"
+              filter={`url(#${uid}-glow)`}
+            />
+            <path d="M70 22 L70 114" stroke="#c4a86a" strokeWidth="1.4" opacity="0.85" />
+            <path d="M70 22 L14 28 L12 36 L70 28 Z" fill={`url(#${uid}-cover)`} stroke="#d8bc78" strokeWidth="0.8" />
+            <path d="M70 22 L126 28 L128 36 L70 28 Z" fill={`url(#${uid}-cover)`} stroke="#d8bc78" strokeWidth="0.8" />
+            {/* Линии текста на страницах */}
+            {[0, 1, 2, 3, 4].map((i) => (
+              <g key={i} opacity={0.35}>
+                <line x1="30" y1={48 + i * 10} x2="58" y2={48 + i * 10} stroke="#8a7048" strokeWidth="0.7" />
+                <line x1="82" y1={48 + i * 10} x2="110" y2={48 + i * 10} stroke="#8a7048" strokeWidth="0.7" />
+              </g>
+            ))}
+            <circle cx="70" cy="68" r="10" fill="none" stroke="#d8bc78" strokeWidth="1" opacity="0.7" />
+            <text x="70" y="126" textAnchor="middle" fill="#d8bc78" fontSize="7" opacity="0.85" fontFamily="serif">
+              Книга раскрыта
+            </text>
+          </>
+        ) : (
+          <>
+            <rect
+              x="28"
+              y="12"
+              width="84"
+              height="108"
+              rx="4"
+              fill={`url(#${uid}-cover)`}
+              stroke="#d8bc78"
+              strokeWidth={frame(level)}
+              opacity={locked ? 0.35 : 1}
+              filter={locked ? undefined : `url(#${uid}-glow)`}
+            />
+            <rect x="28" y="12" width="84" height="108" rx="4" fill={`url(#${uid}-shine)`} opacity={locked ? 0 : 1} />
+            <rect x="38" y="22" width="64" height="88" rx="2" fill="none" stroke="#d8bc78" strokeWidth="0.7" opacity="0.45" />
+            <circle cx="70" cy="66" r="16" fill="none" stroke="#d8bc78" strokeWidth="1.2" opacity={locked ? 0.2 : 0.8} />
+            <line x1="70" y1="50" x2="70" y2="82" stroke="#d8bc78" strokeWidth="0.8" opacity="0.7" />
+            <line x1="56" y1="66" x2="84" y2="66" stroke="#d8bc78" strokeWidth="0.8" opacity="0.7" />
+            {level >= 5 && <circle cx="70" cy="66" r="8" fill="none" stroke="#d8bc78" strokeWidth="0.6" opacity="0.5" />}
+            {level >= 10 && (
+              <path d="M46 30 L52 30 M88 30 L94 30 M46 102 L52 102 M88 102 L94 102" stroke="#d8bc78" strokeWidth="1" />
+            )}
+            {level >= 20 && <circle cx="70" cy="66" r="22" fill="none" stroke="#d8bc78" strokeWidth="0.5" opacity="0.35" />}
+            <text x="70" y="124" textAnchor="middle" fill="#d8bc78" fontSize="7" opacity="0.7" fontFamily="serif">
+              Книга знаков
+            </text>
+          </>
         )}
-        {level >= 20 && <circle cx="60" cy="70" r="22" fill="none" stroke="#d8bc78" strokeWidth="0.5" opacity="0.35" />}
-        <text x="60" y="118" textAnchor="middle" fill="#d8bc78" fontSize="7" opacity="0.7" fontFamily="serif">
-          Книга знаков
-        </text>
       </svg>
-    </button>
+    </div>
   );
 }
 

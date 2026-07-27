@@ -135,6 +135,8 @@ enum ActivationBonusType {
   PROGRAM
   ENERGY
   CUSTOM
+  /// Скидка в магазине; bonusValue = процент ("1".."100")
+  SHOP_DISCOUNT
 }
 
 model User {
@@ -159,6 +161,7 @@ model User {
   cartItems    CartItem[]
   orders       Order[]
   activations  ActivationRedemption[]
+  assignedCodes ActivationCode[]      @relation("AssignedPromoCodes")
   gameSave     GameSave?
   achievements UserAchievement[]
   courseProg   CourseProgress[]
@@ -524,17 +527,27 @@ model OrderItem {
 }
 
 model ActivationCode {
-  id         String              @id @default(uuid())
-  code       String              @unique
-  bonusType  ActivationBonusType
-  bonusValue String // JSON or plain
-  maxUses    Int                 @default(1)
-  usedCount  Int                 @default(0)
-  expiresAt  DateTime?
-  active     Boolean             @default(true)
-  createdAt  DateTime            @default(now())
+  id             String              @id @default(uuid())
+  code           String              @unique
+  bonusType      ActivationBonusType
+  bonusValue     String // JSON or plain; for SHOP_DISCOUNT — percent
+  maxUses        Int                 @default(1)
+  usedCount      Int                 @default(0)
+  expiresAt      DateTime?
+  active         Boolean             @default(true)
+  /// Персональный промокод (награда из игры) — только этот пользователь
+  assignedUserId String?
+  assignedUser   User?               @relation("AssignedPromoCodes", fields: [assignedUserId], references: [id], onDelete: Cascade)
+  /// Например tarot_center:3
+  source         String?
+  note           String?
+  createdAt      DateTime            @default(now())
 
   redemptions ActivationRedemption[]
+
+  @@index([assignedUserId])
+  @@index([source])
+  @@index([bonusType, active])
 }
 
 model ActivationRedemption {

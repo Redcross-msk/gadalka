@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 import { useAppStore } from "@/store/useAppStore";
 import { ProductVisual } from "./ProductVisual";
+import { addToCartAction } from "@/features/shop/actions";
 
 const categoryLabels: Record<string, string> = {
   cards: "Карты",
@@ -29,8 +30,9 @@ export function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart(product.slug);
+    addToCart(product.slug, product.id);
     addToast({ title: "Добавлено в корзину", description: product.name, variant: "success" });
+    void addToCartAction(product.id, 1).catch(() => undefined);
   };
 
   return (

@@ -278,8 +278,64 @@
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
 
+  /* Толкователь на телефоне: страница не скроллится, только лента сообщений */
+  html.interpreter-chat-immersive {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  body.interpreter-chat-immersive {
+    overflow: hidden;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  @supports (height: 100svh) {
+    body.interpreter-chat-immersive {
+      height: 100svh;
+      max-height: 100svh;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    body.interpreter-chat-immersive main {
+      padding-bottom: 0 !important;
+      overflow: hidden;
+      height: 100%;
+      max-height: 100%;
+    }
+
+    body.interpreter-chat-immersive .platform-page-shell {
+      min-height: 0 !important;
+      height: 100%;
+      max-height: 100%;
+      overflow: hidden;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+    }
+
+    body.interpreter-chat-immersive .platform-legal-disclaimer {
+      display: none !important;
+    }
+  }
+
   .section-mobile {
     scroll-margin-top: 1rem;
+  }
+
+  /* Idle-игра: без выделения текста / «скопировать» при спаме тапов */
+  .game-touch-lock,
+  .game-touch-lock * {
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .game-touch-lock input,
+  .game-touch-lock textarea {
+    -webkit-user-select: text !important;
+    user-select: text !important;
   }
 
   .game-smoke {

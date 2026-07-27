@@ -1,4 +1,9 @@
 import type { ZodiacSign } from "@/types";
+import {
+  getDailyHoroscope,
+  horoscopeDisclaimer,
+  type HoroscopeSections,
+} from "@/data/dailyHoroscopes";
 
 export const zodiacSigns: { id: ZodiacSign; name: string; dates: string }[] = [
   { id: "aries", name: "Овен", dates: "21.03–19.04" },
@@ -15,45 +20,23 @@ export const zodiacSigns: { id: ZodiacSign; name: string; dates: string }[] = [
   { id: "pisces", name: "Рыбы", dates: "19.02–20.03" },
 ];
 
-/** Демо-гороскопы. Позже заменить на CMS / API / партнёрский контент. */
-const horoscopeTexts: Record<ZodiacSign, string> = {
-  aries:
-    "Сегодня энергия Овна направлена на ясность решений. Не торопитесь с ответом — сначала прислушайтесь к внутреннему импульсу. Удачный день для коротких, но важных разговоров.",
-  taurus:
-    "Тельцу сегодня важно не спешить. Маленький шаг вперёд даст больше, чем рывок. Обратите внимание на то, что уже есть под рукой — ресурсы ближе, чем кажется.",
-  gemini:
-    "Близнецам день приносит новые идеи и встречи. Фильтруйте информацию: не всё, что звучит интересно, стоит брать в работу. Один ясный приоритет важнее десяти планов.",
-  cancer:
-    "Раку полезно беречь эмоциональные границы. Дом и близкие — источник силы, но не забывайте о себе. Вечер подойдёт для тихой рефлексии и короткой записи в дневник.",
-  leo:
-    "Льву сегодня открывается пространство для самовыражения. Не прячьте талант за скромностью — ваш свет нужен окружению. Действуйте уверенно, но без давления на других.",
-  virgo:
-    "Деве день подсказывает порядок в деталях. Разберите одну запутанную задачу — и почувствуете облегчение. Избегайте перфекционизма: «достаточно хорошо» сегодня лучше, чем «идеально никогда».",
-  libra:
-    "Весам важно искать баланс, а не компромисс любой ценой. В отношениях честность ценнее гармонии ради гармонии. Красивое решение найдётся, если не торопить исход.",
-  scorpio:
-    "Скорпиону день раскрывает скрытые мотивы — свои и чужие. Не бойтесь глубины, но не копайте яму там, где нужна дверь. Интуиция сегодня особенно точна.",
-  sagittarius:
-    "Стрельцу хочется горизонта и движения. Даже короткий выход из привычного маршрута обновит взгляд. Не обещайте больше, чем можете удержать — искренность важнее широты планов.",
-  capricorn:
-    "Козерогу день благоволит структуре. Закрепите один результат — и отпустите лишний контроль. Успех приходит через спокойную дисциплину, а не через напряжение.",
-  aquarius:
-    "Водолею полезно отойти от шаблона. Необычная идея сегодня может оказаться самой практичной. Делитесь мыслями с теми, кто умеет слушать без осуждения.",
-  pisces:
-    "Рыбам день шепчет через образы и совпадения. Запишите сон или знак, если он повторился. Мягкость — ваша сила; не путайте её с бездействием.",
-};
-
 export function getZodiacName(sign: ZodiacSign): string {
   return zodiacSigns.find((z) => z.id === sign)?.name ?? sign;
 }
 
-export function getTodayHoroscope(sign: ZodiacSign): {
+export type TodayHoroscope = {
   sign: ZodiacSign;
   signName: string;
   date: string;
+  /** Общий текст (для совместимости) */
   text: string;
-} {
-  const today = new Date().toLocaleDateString("ru-RU", {
+  sections: HoroscopeSections;
+  disclaimer: string;
+};
+
+export function getTodayHoroscope(sign: ZodiacSign, date = new Date()): TodayHoroscope {
+  const sections = getDailyHoroscope(sign, date);
+  const today = date.toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -63,8 +46,11 @@ export function getTodayHoroscope(sign: ZodiacSign): {
     sign,
     signName: getZodiacName(sign),
     date: today,
-    text: horoscopeTexts[sign],
+    text: sections.general,
+    sections,
+    disclaimer: horoscopeDisclaimer,
   };
 }
 
-// Future: fetchHoroscopeFromApi(sign, date) — партнёрский API / CMS / собственный контент
+export type { HoroscopeSections };
+export { getDailyHoroscope, horoscopeDisclaimer };

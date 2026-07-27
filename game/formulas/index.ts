@@ -77,6 +77,10 @@ export function getRankLabel(level: number): string {
 }
 
 export function comboMultiplier(combo: number): number {
+  if (combo >= 1000) return 5;
+  if (combo >= 500) return 4;
+  if (combo >= 250) return 3;
+  if (combo >= 100) return 2.5;
   if (combo >= 50) return 2;
   if (combo >= 25) return 1.5;
   if (combo >= 10) return 1.2;
@@ -94,9 +98,9 @@ export function calculateClickIncome(params: {
   combo: number;
 }): number {
   // Книга: каждый уровень заметно усиливает клик
-  const bookPower = 1 + (params.bookLevel - 1) * 0.55;
+  const bookPower = 1 + (params.bookLevel - 1) * 0.7;
   // Колода: дополнительный множитель к клику
-  const deckPower = 1 + params.deckLevel * 0.12;
+  const deckPower = 1 + params.deckLevel * 0.15;
   return Math.max(
     1,
     Math.floor(

@@ -1,12 +1,7 @@
 import type { InterpreterMode } from "@/types";
-import { generateId } from "@/lib/utils";
+import { formatDreamInterpretation, interpretDream } from "@/data/dreamInterpreter";
 
-const responses: Record<InterpreterMode, string[]> = {
-  dream: [
-    "Ваш сон содержит интересные символы. Дверь часто означает переход или новую возможность, а зеркало — приглашение к самопознанию. Обратите внимание на эмоции, которые остались после пробуждения.",
-    "Сновидение указывает на процесс внутренней трансформации. Повторяющиеся образы особенно значимы — они могут указывать на незавершённый внутренний процесс.",
-    "Символы воды и зеркала в вашем сне говорят о глубоких эмоциях и желании увидеть себя настоящего. Это приглашение к честному разговору с собой.",
-  ],
+const responses: Record<Exclude<InterpreterMode, "dream">, string[]> = {
   spread: [
     "Ваш расклад показывает интересную динамику. Первая карта указывает на корень ситуации, вторая — на текущее состояние, а третья открывает возможное направление развития.",
     "Карты в вашем раскладе создают историю перехода. Обратите внимание на повторяющиеся темы — они указывают на главный урок.",
@@ -34,6 +29,10 @@ export async function sendMessage(
   message: string
 ): Promise<string> {
   await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 700));
+
+  if (mode === "dream") {
+    return formatDreamInterpretation(interpretDream(message));
+  }
 
   const modeResponses = responses[mode];
   const baseResponse = modeResponses[Math.floor(Math.random() * modeResponses.length)];

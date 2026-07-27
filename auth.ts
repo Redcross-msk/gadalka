@@ -7,11 +7,14 @@ import { z } from "zod";
 import type { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { env } from "@/lib/env";
+import { isPremiumSubscription } from "@/lib/mappers/user";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
 });
+
+const PREMIUM_REFRESH_MS = 60_000;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -48,10 +51,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           data: { lastLoginAt: new Date() },
         });
 
-        const isPremium =
-          user.subscription?.plan !== "FREE" &&
-          user.subscription?.status === "ACTIVE" &&
-          (!user.subscription.endsAt || user.subscription.endsAt > new Date());
+        const isPremium = isPremiumSubscription(user.subscription);
 
         return {
           id: user.id,
@@ -59,7 +59,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.profile?.displayName ?? user.email,
           displayName: user.profile?.displayName ?? user.email,
           role: user.role as UserRole,
-          isPremium: Boolean(isPremium),
+          isPremium,
           onboardingComplete: user.profile?.onboardingComplete ?? false,
         };
       },
@@ -79,6 +79,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.displayName = (u.displayName ?? user.name ?? user.email)?.trim() || null;
         token.isPremium = Boolean(u.isPremium);
         token.onboardingComplete = Boolean(u.onboardingComplete);
+        token.premiumCheckedAt = Date.now();
       }
       if (trigger === "update" && session) {
         const s = session as {
@@ -87,9 +88,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           onboardingComplete?: boolean;
         };
         if (s.displayName !== undefined) token.displayName = s.displayName;
-        if (s.isPremium !== undefined) token.isPremium = s.isPremium;
+        if (s.isPremium !== undefined) {
+          token.isPremium = s.isPremium;
+          token.premiumCheckedAt = Date.now();
+        }
         if (s.onboardingComplete !== undefined) token.onboardingComplete = s.onboardingComplete;
       }
+
+      // Подтягиваем план из БД (админ / оплата) без перелогина
+      const userId = token.id as string | undefined;
+      const last = (token.premiumCheckedAt as number | undefined) ?? 0;
+      if (userId && Date.now() - last > PREMIUM_REFRESH_MS) {
+        try {
+          const row = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { subscription: true, status: true },
+          });
+          if (row?.status === "ACTIVE") {
+            token.isPremium = isPremiumSubscription(row.subscription);
+          }
+        } catch {
+          /* ignore */
+        }
+        token.premiumCheckedAt = Date.now();
+      }
+
       return token;
     },
     async session({ session, token }) {

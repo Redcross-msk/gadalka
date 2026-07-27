@@ -26,7 +26,14 @@ export function LockedContent({
   );
 }
 
-export function PremiumBadge() {
+export function PremiumBadge({ unlocked = false }: { unlocked?: boolean }) {
+  if (unlocked) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-400">
+        Доступно
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-gold/40 bg-burgundy/30 px-2.5 py-0.5 text-xs font-medium text-gold-light">
       <Lock className="h-3 w-3" />

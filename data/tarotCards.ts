@@ -1,39 +1,295 @@
-import type { TarotCard } from "@/types";
+import type { TarotCard, TarotSymbol } from "@/types";
+import {
+  tarotDeckCards,
+  type TarotArcana,
+  type TarotSuit,
+} from "@/data/tarot/deck";
 
-const majorArcana: Omit<TarotCard, "id">[] = [
-  { slug: "shut", number: 0, name: "Шут", shortMeaning: "Начало пути, свобода, доверие", fullMeaning: "Шут символизирует начало нового пути, готовность к приключениям и доверие жизни.", lightSide: "Свобода, спонтанность, новые возможности", shadowSide: "Безрассудство, наивность, бегство от ответственности", relationshipsMeaning: "Новые знакомства, лёгкость в отношениях", workMeaning: "Новый проект, смена направления", decisionMeaning: "Смело шагните в неизвестное", symbols: [{ id: "s1", name: "Собака", description: "Верность и инстинкт", x: 30, y: 70 }, { id: "s2", name: "Роза", description: "Страсть и красота", x: 60, y: 40 }], image: "/images/tarot/shut.svg", premium: false, tags: ["начало", "свобода"], relatedCards: ["mag", "mir"], relatedSpreads: ["one-card", "three-cards"] },
-  { slug: "mag", number: 1, name: "Маг", shortMeaning: "Воля, мастерство, проявление", fullMeaning: "Маг — символ силы воли и способности воплощать идеи в реальность.", lightSide: "Мастерство, концентрация, инициатива", shadowSide: "Манипуляции, обман, злоупотребление силой", relationshipsMeaning: "Активное участие, умение договариваться", workMeaning: "Лидерство, реализация проектов", decisionMeaning: "У вас есть все ресурсы для успеха", symbols: [{ id: "s1", name: "Жезл", description: "Воля и действие", x: 25, y: 50 }, { id: "s2", name: "Кубок", description: "Эмоции и интуиция", x: 50, y: 50 }], image: "/images/tarot/mag.svg", premium: false, tags: ["воля", "мастерство"], relatedCards: ["shut", "verkhovnaya-zhestitsa"], relatedSpreads: ["one-card", "three-cards"] },
-  { slug: "verkhovnaya-zhestitsa", number: 2, name: "Верховная Жреца", shortMeaning: "Интуиция, тайное знание, внутренний голос", fullMeaning: "Жрец — хранительница тайных знаний и внутренней мудрости.", lightSide: "Интуиция, глубина, понимание", shadowSide: "Секретность, отстранённость, подавление чувств", relationshipsMeaning: "Глубокая связь, невысказанное понимание", workMeaning: "Исследование, работа с информацией", decisionMeaning: "Прислушайтесь к интуиции", symbols: [{ id: "s1", name: "Луна", description: "Циклы и интуиция", x: 50, y: 20 }, { id: "s2", name: "Колонны", description: "Граница между мирами", x: 20, y: 60 }], image: "/images/tarot/priestess.svg", premium: false, tags: ["интуиция", "тайна"], relatedCards: ["mag", "imperatritsa"], relatedSpreads: ["three-cards"] },
-  { slug: "imperatritsa", number: 3, name: "Императрица", shortMeaning: "Изобилие, забота, творчество", fullMeaning: "Императрица — символ плодородия, красоты и материнской энергии.", lightSide: "Творчество, изобилие, забота", shadowSide: "Зависимость, излишества, контроль", relationshipsMeaning: "Тепло, забота, гармония", workMeaning: "Творческие проекты, рост", decisionMeaning: "Позвольте себе создавать и наслаждаться", symbols: [{ id: "s1", name: "Пшеница", description: "Изобилие и урожай", x: 40, y: 75 }, { id: "s2", name: "Корона", description: "Власть и мудрость", x: 50, y: 15 }], image: "/images/tarot/empress.svg", premium: false, tags: ["изобилие", "творчество"], relatedCards: ["verkhovnaya-zhestitsa", "imperator"], relatedSpreads: ["relationships"] },
-  { slug: "imperator", number: 4, name: "Император", shortMeaning: "Структура, власть, стабильность", fullMeaning: "Император представляет порядок, авторитет и структурирование.", lightSide: "Стабильность, защита, лидерство", shadowSide: "Жёсткость, контроль, авторитаризм", relationshipsMeaning: "Надёжность, защита, структура", workMeaning: "Управление, организация", decisionMeaning: "Создайте прочный фундамент", symbols: [{ id: "s1", name: "Трон", description: "Власть и стабильность", x: 50, y: 70 }, { id: "s2", name: "Орёл", description: "Видение и сила", x: 70, y: 30 }], image: "/images/tarot/emperor.svg", premium: false, tags: ["власть", "структура"], relatedCards: ["imperatritsa", "ierofant"], relatedSpreads: ["important-decision"] },
-  { slug: "ierofant", number: 5, name: "Иерофант", shortMeaning: "Традиция, обучение, духовность", fullMeaning: "Иерофант — проводник традиций и духовных знаний.", lightSide: "Мудрость, наставничество, традиции", shadowSide: "Догматизм, давление, конформизм", relationshipsMeaning: "Общие ценности, официальные отношения", workMeaning: "Обучение, наставничество", decisionMeaning: "Обратитесь к проверенным методам", symbols: [{ id: "s1", name: "Ключи", description: "Доступ к знаниям", x: 35, y: 55 }, { id: "s2", name: "Посох", description: "Духовный авторитет", x: 65, y: 45 }], image: "/images/tarot/hierophant.svg", premium: false, tags: ["традиция", "обучение"], relatedCards: ["imperator", "vlyublyonnye"], relatedSpreads: ["three-cards"] },
-  { slug: "vlyublyonnye", number: 6, name: "Влюблённые", shortMeaning: "Выбор, гармония, соединение", fullMeaning: "Карта выбора между путями и гармонии в соединении.", lightSide: "Любовь, гармония, осознанный выбор", shadowSide: "Нерешительность, зависимость, конфликт ценностей", relationshipsMeaning: "Глубокая связь, важный выбор", workMeaning: "Партнёрство, совместные решения", decisionMeaning: "Следуйте сердцу, но не игнорируйте разум", symbols: [{ id: "s1", name: "Ангел", description: "Божественное благословение", x: 50, y: 10 }, { id: "s2", name: "Деревья", description: "Рост и выбор", x: 20, y: 80 }], image: "/images/tarot/lovers.svg", premium: false, tags: ["любовь", "выбор"], relatedCards: ["ierofant", "kolesnitsa"], relatedSpreads: ["relationships", "two-choices"] },
-  { slug: "kolesnitsa", number: 7, name: "Колесница", shortMeaning: "Движение, победа, контроль", fullMeaning: "Колесница — триумф воли над препятствиями.", lightSide: "Решимость, прогресс, победа", shadowSide: "Агрессия, потеря контроля, импульсивность", relationshipsMeaning: "Движение вперёд вместе или расставание", workMeaning: "Амбиции, карьерный рост", decisionMeaning: "Действуйте решительно", symbols: [{ id: "s1", name: "Сфинксы", description: "Противоположные силы", x: 30, y: 65 }, { id: "s2", name: "Звёзды", description: "Направление и судьба", x: 50, y: 15 }], image: "/images/tarot/chariot.svg", premium: false, tags: ["движение", "победа"], relatedCards: ["vlyublyonnye", "sila"], relatedSpreads: ["important-decision"] },
-  { slug: "sila", number: 8, name: "Сила", shortMeaning: "Мужество, терпение, внутренняя сила", fullMeaning: "Сила — не грубая мощь, а мягкая уверенность и самоконтроль.", lightSide: "Смелость, сострадание, стойкость", shadowSide: "Подавление, страх, слабость", relationshipsMeaning: "Терпение, принятие, глубокая связь", workMeaning: "Настойчивость, мягкая сила", decisionMeaning: "Проявите терпение и мудрость", symbols: [{ id: "s1", name: "Лев", description: "Страсти и инстинкты", x: 50, y: 60 }, { id: "s2", name: "Бесконечность", description: "Вечная энергия", x: 50, y: 25 }], image: "/images/tarot/strength.svg", premium: false, tags: ["мужество", "терпение"], relatedCards: ["kolesnitsa", "otshchelnik"], relatedSpreads: ["three-cards"] },
-  { slug: "otshchelnik", number: 9, name: "Отшельник", shortMeaning: "Уединение, поиск, внутренний свет", fullMeaning: "Отшельник уходит в себя, чтобы найти истинные ответы.", lightSide: "Мудрость, самопознание, направление", shadowSide: "Изоляция, одиночество, уход от мира", relationshipsMeaning: "Потребность в пространстве, размышления", workMeaning: "Самостоятельная работа, исследование", decisionMeaning: "Время для размышлений", symbols: [{ id: "s1", name: "Фонарь", description: "Внутренний свет", x: 55, y: 35 }, { id: "s2", name: "Посох", description: "Опора и путь", x: 40, y: 70 }], image: "/images/tarot/hermit.svg", premium: false, tags: ["уединение", "поиск"], relatedCards: ["sila", "koleso-fortuny"], relatedSpreads: ["one-card"] },
-  { slug: "koleso-fortuny", number: 10, name: "Колесо Фортуны", shortMeaning: "Судьба, циклы, перемены", fullMeaning: "Колесо напоминает о цикличности жизни и неизбежности перемен.", lightSide: "Удача, новые возможности, поворот", shadowSide: "Нестабильность, неожиданные потери", relationshipsMeaning: "Судьбоносная встреча, перемены", workMeaning: "Поворотный момент в карьере", decisionMeaning: "Примите цикличность жизни", symbols: [{ id: "s1", name: "Колесо", description: "Циклы судьбы", x: 50, y: 50 }, { id: "s2", name: "Сфинкс", description: "Загадка жизни", x: 50, y: 20 }], image: "/images/tarot/wheel.svg", premium: false, tags: ["судьба", "циклы"], relatedCards: ["otshchelnik", "spravedlivost"], relatedSpreads: ["month"] },
-  { slug: "spravedlivost", number: 11, name: "Справедливость", shortMeaning: "Баланс, истина, ответственность", fullMeaning: "Справедливость требует честности и принятия последствий.", lightSide: "Честность, равновесие, ясность", shadowSide: "Жёсткий суд, непрощение, предвзятость", relationshipsMeaning: "Честность, равновесие в отношениях", workMeaning: "Справедливые решения, договоры", decisionMeaning: "Будьте честны с собой", symbols: [{ id: "s1", name: "Весы", description: "Равновесие и справедливость", x: 50, y: 45 }, { id: "s2", name: "Меч", description: "Истина и решение", x: 50, y: 70 }], image: "/images/tarot/justice.svg", premium: true, tags: ["баланс", "истина"], relatedCards: ["koleso-fortuny", "poveshennyj"], relatedSpreads: ["important-decision"] },
-  { slug: "poveshennyj", number: 12, name: "Повешенный", shortMeaning: "Пауза, новый взгляд, жертва", fullMeaning: "Повешенный видит мир иначе — через добровольную паузу.", lightSide: "Новая перспектива, принятие, просветление", shadowSide: "Застой, жертвенность, беспомощность", relationshipsMeaning: "Переосмысление, терпение", workMeaning: "Пауза для нового подхода", decisionMeaning: "Посмотрите с другой стороны", symbols: [{ id: "s1", name: "Дерево", description: "Связь миров", x: 50, y: 30 }, { id: "s2", name: "Нимб", description: "Просветление", x: 50, y: 15 }], image: "/images/tarot/hanged.svg", premium: true, tags: ["пауза", "перспектива"], relatedCards: ["spravedlivost", "smert"], relatedSpreads: ["mirror"] },
-  { slug: "smert", number: 13, name: "Смерть", shortMeaning: "Трансформация, завершение, обновление", fullMeaning: "Смерть — не конец, а глубокая трансформация и освобождение.", lightSide: "Обновление, освобождение, перемены", shadowSide: "Страх перемен, застой, сопротивление", relationshipsMeaning: "Конец цикла, трансформация отношений", workMeaning: "Завершение проекта, новое начало", decisionMeaning: "Отпустите старое", symbols: [{ id: "s1", name: "Флаг", description: "Новое начало", x: 60, y: 40 }, { id: "s2", name: "Роза", description: "Красота трансформации", x: 40, y: 75 }], image: "/images/tarot/death.svg", premium: true, tags: ["трансформация", "завершение"], relatedCards: ["poveshennyj", "umerennost"], relatedSpreads: ["past-trail"] },
-  { slug: "umerennost", number: 14, name: "Умеренность", shortMeaning: "Гармония, баланс, терпение", fullMeaning: "Умеренность учит искусству баланса и терпеливого смешения.", lightSide: "Гармония, исцеление, терпение", shadowSide: "Нетерпение, крайности, дисбаланс", relationshipsMeaning: "Гармония, компромисс", workMeaning: "Сбалансированный подход", decisionMeaning: "Найдите золотую середину", symbols: [{ id: "s1", name: "Кубки", description: "Смешение элементов", x: 50, y: 55 }, { id: "s2", name: "Ангел", description: "Божественное руководство", x: 50, y: 15 }], image: "/images/tarot/temperance.svg", premium: true, tags: ["гармония", "баланс"], relatedCards: ["smert", "dyavol"], relatedSpreads: ["month"] },
-  { slug: "dyavol", number: 15, name: "Дьявол", shortMeaning: "Привязанности, искушения, тень", fullMeaning: "Дьявол освещает наши привязанности и скрытые желания.", lightSide: "Осознание тени, страсть, материальность", shadowSide: "Зависимость, манипуляции, одержимость", relationshipsMeaning: "Страсть, зависимость, соблазн", workMeaning: "Материальные соблазны, карьерная одержимость", decisionMeaning: "Осознайте свои привязанности", symbols: [{ id: "s1", name: "Цепи", description: "Привязанности", x: 40, y: 70 }, { id: "s2", name: "Факел", description: "Страсть и искушение", x: 60, y: 30 }], image: "/images/tarot/devil.svg", premium: true, tags: ["тень", "искушение"], relatedCards: ["umerennost", "bashnya"], relatedSpreads: ["price-of-desire"] },
-  { slug: "bashnya", number: 16, name: "Башня", shortMeaning: "Разрушение, откровение, освобождение", fullMeaning: "Башня разрушает ложные структуры, открывая истину.", lightSide: "Освобождение, пробуждение, истина", shadowSide: "Хаос, травма, страх", relationshipsMeaning: "Кризис, разрушение иллюзий", workMeaning: "Неожиданные перемены", decisionMeaning: "Примите неизбежные изменения", symbols: [{ id: "s1", name: "Молния", description: "Внезапное озарение", x: 50, y: 20 }, { id: "s2", name: "Корона", description: "Падение эго", x: 50, y: 35 }], image: "/images/tarot/tower.svg", premium: true, tags: ["разрушение", "откровение"], relatedCards: ["dyavol", "zvezda"], relatedSpreads: ["closed-door"] },
-  { slug: "zvezda", number: 17, name: "Звезда", shortMeaning: "Надежда, вдохновение, исцеление", fullMeaning: "Звезда приносит надежду после бури и вдохновляет на путь.", lightSide: "Надежда, вера, обновление", shadowSide: "Иллюзии, оторванность от реальности", relationshipsMeaning: "Надежда, духовная связь", workMeaning: "Вдохновение, творческий подъём", decisionMeaning: "Доверьтесь процессу", symbols: [{ id: "s1", name: "Звезда", description: "Надежда и направление", x: 50, y: 20 }, { id: "s2", name: "Вода", description: "Исцеление и поток", x: 50, y: 75 }], image: "/images/tarot/star.svg", premium: true, tags: ["надежда", "вдохновение"], relatedCards: ["bashnya", "luna"], relatedSpreads: ["three-cards"] },
-  { slug: "luna", number: 18, name: "Луна", shortMeaning: "Иллюзии, подсознание, интуиция", fullMeaning: "Луна освещает скрытое и приглашает в мир подсознания.", lightSide: "Интуиция, воображение, глубина", shadowSide: "Страх, иллюзии, обман", relationshipsMeaning: "Неясность, скрытые чувства", workMeaning: "Неопределённость, интуитивные решения", decisionMeaning: "Не всё так, как кажется", symbols: [{ id: "s1", name: "Луна", description: "Циклы и тайны", x: 50, y: 15 }, { id: "s2", name: "Собака и волк", description: "Приручённое и дикое", x: 30, y: 70 }], image: "/images/tarot/moon.svg", premium: true, tags: ["иллюзии", "подсознание"], relatedCards: ["zvezda", "solntse"], relatedSpreads: ["mirror", "seven-dreams"] },
-  { slug: "solntse", number: 19, name: "Солнце", shortMeaning: "Радость, успех, ясность", fullMeaning: "Солнце приносит радость, успех и ясное понимание.", lightSide: "Счастье, успех, жизненная сила", shadowSide: "Излишний оптимизм, выгорание", relationshipsMeaning: "Радость, открытость, тепло", workMeaning: "Успех, признание", decisionMeaning: "Действуйте с уверенностью", symbols: [{ id: "s1", name: "Солнце", description: "Жизненная сила", x: 50, y: 15 }, { id: "s2", name: "Ребёнок", description: "Невинность и радость", x: 50, y: 65 }], image: "/images/tarot/sun.svg", premium: true, tags: ["радость", "успех"], relatedCards: ["luna", "sud"], relatedSpreads: ["one-card"] },
-  { slug: "sud", number: 20, name: "Суд", shortMeaning: "Пробуждение, призвание, возрождение", fullMeaning: "Суд — карта пробуждения и ответа на внутренний зов.", lightSide: "Обновление, призвание, прощение", shadowSide: "Самокритика, страх оценки", relationshipsMeaning: "Примирение, новый этап", workMeaning: "Призвание, важное решение", decisionMeaning: "Ответьте на зов", symbols: [{ id: "s1", name: "Труба", description: "Призыв к пробуждению", x: 50, y: 20 }, { id: "s2", name: "Гроб", description: "Возрождение", x: 50, y: 75 }], image: "/images/tarot/judgement.svg", premium: true, tags: ["пробуждение", "призвание"], relatedCards: ["solntse", "mir"], relatedSpreads: ["past-trail"] },
-  { slug: "mir", number: 21, name: "Мир", shortMeaning: "Завершение, целостность, достижение", fullMeaning: "Мир — завершение цикла и достижение гармонии.", lightSide: "Целостность, успех, гармония", shadowSide: "Застой, страх завершения", relationshipsMeaning: "Полнота, гармония", workMeaning: "Завершение проекта, достижение цели", decisionMeaning: "Вы на верном пути", symbols: [{ id: "s1", name: "Венок", description: "Победа и завершение", x: 50, y: 50 }, { id: "s2", name: "Фигуры", description: "Четыре стихии", x: 25, y: 75 }], image: "/images/tarot/world.svg", premium: true, tags: ["завершение", "целостность"], relatedCards: ["sud", "shut"], relatedSpreads: ["month"] },
+/** Движковый id → slug в URL / старых данных (избранное, карта дня). */
+export const ENGINE_ID_TO_SLUG: Record<string, string> = {
+  fool: "shut",
+  magician: "mag",
+  high_priestess: "verkhovnaya-zhestitsa",
+  empress: "imperatritsa",
+  emperor: "imperator",
+  hierophant: "ierofant",
+  lovers: "vlyublyonnye",
+  chariot: "kolesnitsa",
+  strength: "sila",
+  hermit: "otshchelnik",
+  wheel_of_fortune: "koleso-fortuny",
+  justice: "spravedlivost",
+  hanged_man: "poveshennyj",
+  death: "smert",
+  temperance: "umerennost",
+  devil: "dyavol",
+  tower: "bashnya",
+  star: "zvezda",
+  moon: "luna",
+  sun: "solntse",
+  judgement: "sud",
+  world: "mir",
+};
+
+export const SLUG_TO_ENGINE_ID: Record<string, string> = Object.fromEntries(
+  Object.entries(ENGINE_ID_TO_SLUG).map(([engineId, slug]) => [slug, engineId])
+);
+
+const LEGACY_SYMBOLS: Record<string, TarotSymbol[]> = {
+  shut: [
+    { id: "s1", name: "Собака", description: "Верность и инстинкт", x: 30, y: 70 },
+    { id: "s2", name: "Роза", description: "Страсть и красота", x: 60, y: 40 },
+  ],
+  mag: [
+    { id: "s1", name: "Жезл", description: "Воля и действие", x: 25, y: 50 },
+    { id: "s2", name: "Кубок", description: "Эмоции и интуиция", x: 50, y: 50 },
+  ],
+  "verkhovnaya-zhestitsa": [
+    { id: "s1", name: "Луна", description: "Циклы и интуиция", x: 50, y: 20 },
+    { id: "s2", name: "Колонны", description: "Граница между мирами", x: 20, y: 60 },
+  ],
+  imperatritsa: [
+    { id: "s1", name: "Пшеница", description: "Изобилие и урожай", x: 40, y: 75 },
+    { id: "s2", name: "Корона", description: "Власть и мудрость", x: 50, y: 15 },
+  ],
+  imperator: [
+    { id: "s1", name: "Трон", description: "Власть и стабильность", x: 50, y: 70 },
+    { id: "s2", name: "Орёл", description: "Видение и сила", x: 70, y: 30 },
+  ],
+  ierofant: [
+    { id: "s1", name: "Ключи", description: "Доступ к знаниям", x: 35, y: 55 },
+    { id: "s2", name: "Посох", description: "Духовный авторитет", x: 65, y: 45 },
+  ],
+  vlyublyonnye: [
+    { id: "s1", name: "Ангел", description: "Божественное благословение", x: 50, y: 10 },
+    { id: "s2", name: "Деревья", description: "Рост и выбор", x: 20, y: 80 },
+  ],
+  kolesnitsa: [
+    { id: "s1", name: "Сфинксы", description: "Противоположные силы", x: 30, y: 65 },
+    { id: "s2", name: "Звёзды", description: "Направление и судьба", x: 50, y: 15 },
+  ],
+  sila: [
+    { id: "s1", name: "Лев", description: "Страсти и инстинкты", x: 50, y: 60 },
+    { id: "s2", name: "Бесконечность", description: "Вечная энергия", x: 50, y: 25 },
+  ],
+  otshchelnik: [
+    { id: "s1", name: "Фонарь", description: "Внутренний свет", x: 55, y: 35 },
+    { id: "s2", name: "Посох", description: "Опора и путь", x: 40, y: 70 },
+  ],
+  "koleso-fortuny": [
+    { id: "s1", name: "Колесо", description: "Циклы судьбы", x: 50, y: 50 },
+    { id: "s2", name: "Сфинкс", description: "Загадка жизни", x: 50, y: 20 },
+  ],
+  spravedlivost: [
+    { id: "s1", name: "Весы", description: "Равновесие и справедливость", x: 50, y: 45 },
+    { id: "s2", name: "Меч", description: "Истина и решение", x: 50, y: 70 },
+  ],
+  poveshennyj: [
+    { id: "s1", name: "Дерево", description: "Связь миров", x: 50, y: 30 },
+    { id: "s2", name: "Нимб", description: "Просветление", x: 50, y: 15 },
+  ],
+  smert: [
+    { id: "s1", name: "Флаг", description: "Новое начало", x: 60, y: 40 },
+    { id: "s2", name: "Роза", description: "Красота трансформации", x: 40, y: 75 },
+  ],
+  umerennost: [
+    { id: "s1", name: "Кубки", description: "Смешение элементов", x: 50, y: 55 },
+    { id: "s2", name: "Ангел", description: "Божественное руководство", x: 50, y: 15 },
+  ],
+  dyavol: [
+    { id: "s1", name: "Цепи", description: "Привязанности", x: 40, y: 70 },
+    { id: "s2", name: "Факел", description: "Страсть и искушение", x: 60, y: 30 },
+  ],
+  bashnya: [
+    { id: "s1", name: "Молния", description: "Внезапное озарение", x: 50, y: 20 },
+    { id: "s2", name: "Корона", description: "Падение эго", x: 50, y: 35 },
+  ],
+  zvezda: [
+    { id: "s1", name: "Звезда", description: "Надежда и направление", x: 50, y: 20 },
+    { id: "s2", name: "Вода", description: "Исцеление и поток", x: 50, y: 75 },
+  ],
+  luna: [
+    { id: "s1", name: "Луна", description: "Циклы и тайны", x: 50, y: 15 },
+    { id: "s2", name: "Собака и волк", description: "Приручённое и дикое", x: 30, y: 70 },
+  ],
+  solntse: [
+    { id: "s1", name: "Солнце", description: "Жизненная сила", x: 50, y: 15 },
+    { id: "s2", name: "Ребёнок", description: "Невинность и радость", x: 50, y: 65 },
+  ],
+  sud: [
+    { id: "s1", name: "Труба", description: "Призыв к пробуждению", x: 50, y: 20 },
+    { id: "s2", name: "Гроб", description: "Возрождение", x: 50, y: 75 },
+  ],
+  mir: [
+    { id: "s1", name: "Венок", description: "Победа и завершение", x: 50, y: 50 },
+    { id: "s2", name: "Фигуры", description: "Четыре стихии", x: 25, y: 75 },
+  ],
+};
+
+const LEGACY_IMAGES: Record<string, string> = {
+  shut: "/images/tarot/shut.svg",
+  mag: "/images/tarot/mag.svg",
+  "verkhovnaya-zhestitsa": "/images/tarot/priestess.svg",
+  imperatritsa: "/images/tarot/empress.svg",
+  imperator: "/images/tarot/emperor.svg",
+  ierofant: "/images/tarot/hierophant.svg",
+  vlyublyonnye: "/images/tarot/lovers.svg",
+  kolesnitsa: "/images/tarot/chariot.svg",
+  sila: "/images/tarot/strength.svg",
+  otshchelnik: "/images/tarot/hermit.svg",
+  "koleso-fortuny": "/images/tarot/wheel.svg",
+  spravedlivost: "/images/tarot/justice.svg",
+  poveshennyj: "/images/tarot/hanged.svg",
+  smert: "/images/tarot/death.svg",
+  umerennost: "/images/tarot/temperance.svg",
+  dyavol: "/images/tarot/devil.svg",
+  bashnya: "/images/tarot/tower.svg",
+  zvezda: "/images/tarot/star.svg",
+  luna: "/images/tarot/moon.svg",
+  solntse: "/images/tarot/sun.svg",
+  sud: "/images/tarot/judgement.svg",
+  mir: "/images/tarot/world.svg",
+};
+
+const SUIT_LABELS: Record<TarotSuit, string> = {
+  wands: "Жезлы",
+  cups: "Кубки",
+  swords: "Мечи",
+  pentacles: "Пентакли",
+};
+
+export type TarotSectionId = "major" | TarotSuit;
+
+export const TAROT_SECTIONS: {
+  id: TarotSectionId;
+  title: string;
+  description: string;
+  count: number;
+}[] = [
+  {
+    id: "major",
+    title: "Старшие Арканы",
+    description: "22 архетипа пути — от Шута до Мира",
+    count: 22,
+  },
+  {
+    id: "wands",
+    title: "Жезлы",
+    description: "Огонь, действие, инициатива",
+    count: 14,
+  },
+  {
+    id: "cups",
+    title: "Кубки",
+    description: "Вода, чувства, отношения",
+    count: 14,
+  },
+  {
+    id: "swords",
+    title: "Мечи",
+    description: "Воздух, мысль, ясность",
+    count: 14,
+  },
+  {
+    id: "pentacles",
+    title: "Пентакли",
+    description: "Земля, ресурсы, устойчивость",
+    count: 14,
+  },
 ];
 
-export const tarotCards: TarotCard[] = majorArcana.map((card, i) => ({
-  ...card,
-  id: `tarot-${i}`,
-}));
+function toSlug(engineId: string): string {
+  return ENGINE_ID_TO_SLUG[engineId] ?? engineId.replace(/_/g, "-");
+}
+
+function toEngineId(slug: string): string {
+  return SLUG_TO_ENGINE_ID[slug] ?? slug.replace(/-/g, "_");
+}
+
+function defaultSymbols(name: string, element: string): TarotSymbol[] {
+  return [
+    { id: "s1", name: "Элемент", description: element, x: 50, y: 28 },
+    { id: "s2", name: "Смысл", description: name, x: 50, y: 72 },
+  ];
+}
+
+function relatedSlugs(engineId: string, arcana: TarotArcana, suit: TarotSuit | null): string[] {
+  const pool = tarotDeckCards.filter((c) =>
+    arcana === "major" ? c.arcana === "major" : c.suit === suit
+  );
+  const idx = pool.findIndex((c) => c.id === engineId);
+  if (idx < 0 || pool.length < 2) return [];
+  const prev = pool[(idx - 1 + pool.length) % pool.length];
+  const next = pool[(idx + 1) % pool.length];
+  return [toSlug(prev.id), toSlug(next.id)];
+}
+
+export const tarotCards: TarotCard[] = tarotDeckCards.map((deck) => {
+  const slug = toSlug(deck.id);
+  const isMajor = deck.arcana === "major";
+  const premium = isMajor ? deck.number >= 11 : true;
+
+  return {
+    id: `tarot-${deck.id}`,
+    slug,
+    number: deck.number,
+    name: deck.name,
+    shortMeaning: deck.keywords.join(", "),
+    fullMeaning: deck.meanings.general,
+    lightSide: deck.light,
+    shadowSide: deck.shadow,
+    relationshipsMeaning: deck.meanings.love,
+    workMeaning: deck.meanings.work,
+    decisionMeaning: deck.meanings.neutralGuidance,
+    financeMeaning: deck.meanings.finance,
+    innerMeaning: deck.meanings.inner,
+    symbols: LEGACY_SYMBOLS[slug] ?? defaultSymbols(deck.name, deck.element),
+    image: LEGACY_IMAGES[slug] ?? `/images/tarot/${slug}.svg`,
+    premium,
+    tags: [...deck.keywords],
+    relatedCards: relatedSlugs(deck.id, deck.arcana, deck.suit),
+    relatedSpreads: isMajor
+      ? ["one-card", "three-cards"]
+      : ["three-cards", "relationships"],
+    arcana: deck.arcana,
+    suit: deck.suit,
+    element: deck.element,
+    rank: deck.rank,
+    engineId: deck.id,
+    suitLabel: deck.suit ? SUIT_LABELS[deck.suit] : "Старшие Арканы",
+  };
+});
+
+const bySlug = new Map(tarotCards.map((c) => [c.slug, c]));
+const byEngineId = new Map(tarotCards.map((c) => [c.engineId!, c]));
 
 export function getTarotCardBySlug(slug: string): TarotCard | undefined {
-  return tarotCards.find((c) => c.slug === slug);
+  return bySlug.get(slug) ?? byEngineId.get(slug) ?? byEngineId.get(toEngineId(slug));
 }
 
 export function getTarotCardByNumber(number: number): TarotCard | undefined {
-  return tarotCards.find((c) => c.number === number);
+  return tarotCards.find((c) => c.number === number && c.arcana === "major");
 }
+
+export function getTarotEngineId(slug: string): string | undefined {
+  const card = getTarotCardBySlug(slug);
+  return card?.engineId ?? SLUG_TO_ENGINE_ID[slug] ?? (byEngineId.has(slug) ? slug : undefined);
+}
+
+export function getCardsBySection(section: TarotSectionId): TarotCard[] {
+  if (section === "major") {
+    return tarotCards.filter((c) => c.arcana === "major");
+  }
+  return tarotCards.filter((c) => c.suit === section);
+}
+
+export function getTarotSection(section: string): (typeof TAROT_SECTIONS)[number] | undefined {
+  return TAROT_SECTIONS.find((s) => s.id === section);
+}
+
+export function getArcanaLabel(card: TarotCard): string {
+  if (card.arcana === "major") return "Старший Аркан";
+  return card.suitLabel ?? "Младший Аркан";
+}
+
+export type { TarotArcana, TarotSuit };

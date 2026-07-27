@@ -2,10 +2,11 @@
 
 import { useParams, notFound } from "next/navigation";
 import Link from "next/link";
-import { Check, Lock, Calendar } from "lucide-react";
+import { Check, Calendar } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { PageHeader, SectionHeader } from "@/components/layout/PageHeader";
 import { LockedContent } from "@/components/shared/LockedContent";
+import { AccessBadge } from "@/components/shared/AccessBadge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -75,11 +76,7 @@ export default function ProgramDetailPage() {
 
       <PageHeader title={program.name} description={program.description}>
         <div className="flex items-center gap-2">
-          {program.premium ? (
-            <Badge variant="premium"><Lock className="h-3 w-3 mr-1" />Премиум</Badge>
-          ) : (
-            <Badge variant="free">Бесплатно</Badge>
-          )}
+          <AccessBadge requiresPremium={program.premium} freeLabel="Бесплатно" />
           <Badge variant="secondary">
             <Calendar className="h-3 w-3 mr-1" />
             {program.duration}

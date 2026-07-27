@@ -31,9 +31,19 @@ export function mapDbProductToApp(p: DbProductFull): Product | null {
 
   const cover =
     resolveUploadedMediaSrc(p.coverMedia?.url, p.coverMedia?.path) ?? "";
-  const gallery = (p.images ?? [])
+  const galleryFromImages = [...(p.images ?? [])]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((img) => resolveUploadedMediaSrc(img.media.url, img.media.path))
     .filter((u): u is string => Boolean(u));
+
+  // Prefer ordered gallery; if empty, fall back to cover as single photo
+  const gallery =
+    galleryFromImages.length > 0
+      ? galleryFromImages
+      : cover
+        ? [cover]
+        : [];
+  const image = gallery[0] ?? cover;
 
   const characteristics =
     p.characteristics && typeof p.characteristics === "object" && !Array.isArray(p.characteristics)
@@ -57,8 +67,8 @@ export function mapDbProductToApp(p: DbProductFull): Product | null {
     category: categoryMap[p.category],
     status,
     digitalBonus: p.digitalBonus ?? undefined,
-    image: cover,
-    gallery: gallery.length > 0 ? gallery : cover ? [cover] : [],
+    image,
+    gallery,
     composition: p.composition ?? undefined,
     characteristics,
     platformConnection: p.platformConnection ?? undefined,

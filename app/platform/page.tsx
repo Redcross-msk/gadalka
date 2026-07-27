@@ -9,12 +9,14 @@ import { FreeSpreadsCarousel } from "@/components/platform/FreeSpreadsCarousel";
 import { DreamCard } from "@/components/dreams/DreamCard";
 import { SymbolCard } from "@/components/platform/SymbolCard";
 import { ProgramCard } from "@/components/platform/ProgramCard";
+import { CourseCard } from "@/components/platform/CourseCard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useHydration";
 import { useAppStore } from "@/store/useAppStore";
 import { subscriptionPlans } from "@/data/user";
 import { getPopularSymbols } from "@/data/symbols";
 import { programs } from "@/data/programs";
+import { courses } from "@/data/courses";
 
 const quickActions = [
   { href: "/platform/today", label: "Сегодня", desc: "Карта и знак дня" },
@@ -32,6 +34,7 @@ export default function PlatformDashboardPage() {
   const recentDreams = dreams.slice(0, 2);
   const popularSymbols = getPopularSymbols().slice(0, 4);
   const featuredPrograms = programs.slice(0, 3);
+  const featuredCourses = courses.slice(0, 3);
 
   if (!hydrated) {
     return (
@@ -176,6 +179,24 @@ export default function PlatformDashboardPage() {
           {featuredPrograms.map((program, i) => (
             <div key={program.id} className={i === 2 ? "sm:col-span-2 md:col-span-1" : undefined}>
               <ProgramCard program={program} />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="section-mobile mb-8 sm:mb-10">
+        <SectionHeader
+          title="Обучение"
+          action={
+            <Button variant="ghost" size="sm" asChild className="text-xs sm:text-sm">
+              <Link href="/platform/learning">Все</Link>
+            </Button>
+          }
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+          {featuredCourses.map((course, i) => (
+            <div key={course.id} className={i === 2 ? "sm:col-span-2 md:col-span-1" : undefined}>
+              <CourseCard course={course} />
             </div>
           ))}
         </div>

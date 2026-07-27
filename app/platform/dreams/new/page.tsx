@@ -108,12 +108,19 @@ export default function NewDreamPage() {
         personalNote: data.personalNote || "",
       });
       dbId = saved.id;
+      const rawMeta = (saved.analysis?.rawMeta ?? null) as {
+        symbolReadings?: { keyword: string; title: string; interpretation: string }[];
+        disclaimer?: string;
+      } | null;
+
       dreamData.analysis = {
         summary: saved.analysis?.summary ?? dreamData.analysis?.summary ?? "",
         emotions: saved.analysis?.emotions ?? [],
         foundSymbols: saved.analysis?.foundSymbols ?? [],
         themes: saved.analysis?.themes ?? [],
         questions: saved.analysis?.questions ?? [],
+        symbolReadings: rawMeta?.symbolReadings ?? dreamData.analysis?.symbolReadings,
+        disclaimer: rawMeta?.disclaimer ?? dreamData.analysis?.disclaimer,
       };
     } catch {
       // останется локальный сейв

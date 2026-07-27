@@ -18,6 +18,8 @@ export interface TarotCard {
   relationshipsMeaning: string;
   workMeaning: string;
   decisionMeaning: string;
+  financeMeaning?: string;
+  innerMeaning?: string;
   symbols: TarotSymbol[];
   image: string;
   premium: boolean;
@@ -25,6 +27,12 @@ export interface TarotCard {
   relatedCards: string[];
   relatedSpreads: string[];
   relatedEpisode?: string;
+  arcana?: "major" | "minor";
+  suit?: "wands" | "cups" | "swords" | "pentacles" | null;
+  element?: string;
+  rank?: string | null;
+  engineId?: string;
+  suitLabel?: string;
 }
 
 export interface SymbolItem {
@@ -114,6 +122,13 @@ export interface DreamAnalysis {
   foundSymbols: string[];
   themes: string[];
   questions: string[];
+  /** Разбор символов из dreamInterpreter */
+  symbolReadings?: {
+    keyword: string;
+    title: string;
+    interpretation: string;
+  }[];
+  disclaimer?: string;
 }
 
 export type DreamMood = "peaceful" | "anxious" | "mysterious" | "joyful" | "sad" | "neutral";
@@ -299,7 +314,15 @@ export type InterpreterMode =
 
 export interface CartItem {
   productSlug: string;
+  /** DB product id — нужен для серверной корзины */
+  productId?: string;
   quantity: number;
+}
+
+export interface AppliedShopPromo {
+  code: string;
+  percent: number;
+  label: string;
 }
 
 export interface ActivatedCode {

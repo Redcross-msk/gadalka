@@ -2,15 +2,16 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import { Heart, Lock, Tv } from "lucide-react";
+import { Heart, Tv } from "lucide-react";
 import { PageHeader, SectionHeader } from "@/components/layout/PageHeader";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { TarotCardFlip } from "@/components/tarot/TarotCardFlip";
 import { LockedContent } from "@/components/shared/LockedContent";
+import { AccessBadge } from "@/components/shared/AccessBadge";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getTarotCardBySlug } from "@/data/tarotCards";
+import { getArcanaLabel, getTarotCardBySlug } from "@/data/tarotCards";
 import { episodes } from "@/data/episodes";
 import { useAppStore } from "@/store/useAppStore";
 import { useAuth } from "@/hooks/useHydration";
@@ -98,6 +99,12 @@ export default function TarotCardPage({
 
   const isLocked = card.premium && !isPremium;
   const isFavorite = favoriteCards.includes(card.slug);
+  const sectionHref =
+    card.arcana === "major"
+      ? "/platform/tarot/section/major"
+      : card.suit
+        ? `/platform/tarot/section/${card.suit}`
+        : "/platform/tarot";
 
   const relatedCards = card.relatedCards
     .map((s) => getTarotCardBySlug(s))
@@ -123,20 +130,14 @@ export default function TarotCardPage({
       <Breadcrumbs
         items={[
           { label: "Таро", href: "/platform/tarot" },
+          { label: getArcanaLabel(card), href: sectionHref },
           { label: card.name },
         ]}
       />
 
       <PageHeader title={card.name} description={card.shortMeaning}>
         <div className="flex items-center gap-2">
-          {card.premium ? (
-            <Badge variant="premium">
-              <Lock className="h-3 w-3 mr-1" />
-              Премиум
-            </Badge>
-          ) : (
-            <Badge variant="free">Доступно</Badge>
-          )}
+          <AccessBadge requiresPremium={card.premium} freeLabel="Доступно" />
           <Button variant="outline" size="sm" onClick={handleFavorite}>
             <Heart className={cn("h-4 w-4 mr-1", isFavorite && "fill-gold text-gold")} />
             {isFavorite ? "В избранном" : "В избранное"}
@@ -147,7 +148,10 @@ export default function TarotCardPage({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="flex flex-col items-center gap-4">
           <TarotCardFlip card={card} flipped size="lg" />
-          <span className="text-sm text-muted-foreground">#{card.number} Старший Аркан</span>
+          <span className="text-sm text-muted-foreground">
+            #{card.number} · {getArcanaLabel(card)}
+            {card.element ? ` · ${card.element}` : ""}
+          </span>
           <div className="flex flex-wrap gap-2 justify-center">
             {card.tags.map((tag) => (
               <Badge key={tag} variant="secondary">
@@ -164,47 +168,50 @@ export default function TarotCardPage({
               description="Полное описание, символы и контексты доступны по подписке Гадалка+"
             />
           ) : (
-            <>
-              <Tabs defaultValue="meaning">
-                <TabsList className="flex-wrap h-auto">
-                  <TabsTrigger value="meaning">Значение</TabsTrigger>
-                  <TabsTrigger value="symbols">Символы</TabsTrigger>
-                  <TabsTrigger value="context">Контексты</TabsTrigger>
-                  <TabsTrigger value="sides">Стороны</TabsTrigger>
-                </TabsList>
+            <Tabs defaultValue="meaning">
+              <TabsList className="flex-wrap h-auto">
+                <TabsTrigger value="meaning">Значение</TabsTrigger>
+                <TabsTrigger value="symbols">Символы</TabsTrigger>
+                <TabsTrigger value="context">Контексты</TabsTrigger>
+                <TabsTrigger value="sides">Стороны</TabsTrigger>
+              </TabsList>
 
-                <TabsContent value="meaning" className="mt-6">
-                  <div className="rounded-xl border border-border bg-card/50 p-6 space-y-4">
-                    <div>
-                      <h3 className="font-serif text-lg mb-2">Полное значение</h3>
-                      <p className="text-muted-foreground leading-relaxed">{card.fullMeaning}</p>
-                    </div>
-                    <div>
-                      <h3 className="font-serif text-lg mb-2">Краткое послание</h3>
-                      <p className="text-gold italic">&ldquo;{card.decisionMeaning}&rdquo;</p>
-                    </div>
+              <TabsContent value="meaning" className="mt-6">
+                <div className="rounded-xl border border-border bg-card/50 p-6 space-y-4">
+                  <div>
+                    <h3 className="font-serif text-lg mb-2">Полное значение</h3>
+                    <p className="text-muted-foreground leading-relaxed">{card.fullMeaning}</p>
                   </div>
-                </TabsContent>
+                  <div>
+                    <h3 className="font-serif text-lg mb-2">Краткое послание</h3>
+                    <p className="text-gold italic">&ldquo;{card.decisionMeaning}&rdquo;</p>
+                  </div>
+                </div>
+              </TabsContent>
 
-                <TabsContent value="symbols" className="mt-6">
-                  <SectionHeader
-                    title="Символы на карте"
-                    description="Интерактивная карта символов"
-                  />
-                  <SymbolHotspots
-                    symbols={card.symbols}
-                    cardNumber={card.number}
-                    cardName={card.name}
-                  />
-                </TabsContent>
+              <TabsContent value="symbols" className="mt-6">
+                <SectionHeader
+                  title="Символы на карте"
+                  description="Интерактивная карта символов"
+                />
+                <SymbolHotspots
+                  symbols={card.symbols}
+                  cardNumber={card.number}
+                  cardName={card.name}
+                />
+              </TabsContent>
 
-                <TabsContent value="context" className="mt-6">
-                  <div className="space-y-4">
-                    {[
-                      { title: "Отношения", text: card.relationshipsMeaning },
-                      { title: "Работа и карьера", text: card.workMeaning },
-                      { title: "Принятие решений", text: card.decisionMeaning },
-                    ].map((section) => (
+              <TabsContent value="context" className="mt-6">
+                <div className="space-y-4">
+                  {[
+                    { title: "Отношения", text: card.relationshipsMeaning },
+                    { title: "Работа и карьера", text: card.workMeaning },
+                    { title: "Финансы", text: card.financeMeaning },
+                    { title: "Внутреннее состояние", text: card.innerMeaning },
+                    { title: "Нейтральный ориентир", text: card.decisionMeaning },
+                  ]
+                    .filter((section) => Boolean(section.text))
+                    .map((section) => (
                       <div
                         key={section.title}
                         className="rounded-xl border border-border bg-card/50 p-5"
@@ -213,28 +220,26 @@ export default function TarotCardPage({
                         <p className="text-sm text-muted-foreground">{section.text}</p>
                       </div>
                     ))}
-                  </div>
-                </TabsContent>
+                </div>
+              </TabsContent>
 
-                <TabsContent value="sides" className="mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="rounded-xl border border-gold/20 bg-burgundy/10 p-5">
-                      <h3 className="font-serif text-lg text-gold mb-2">Светлая сторона</h3>
-                      <p className="text-sm text-muted-foreground">{card.lightSide}</p>
-                    </div>
-                    <div className="rounded-xl border border-border bg-card/50 p-5">
-                      <h3 className="font-serif text-lg mb-2">Теневая сторона</h3>
-                      <p className="text-sm text-muted-foreground">{card.shadowSide}</p>
-                    </div>
+              <TabsContent value="sides" className="mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="rounded-xl border border-gold/20 bg-burgundy/10 p-5">
+                    <h3 className="font-serif text-lg text-gold mb-2">Светлая сторона</h3>
+                    <p className="text-sm text-muted-foreground">{card.lightSide}</p>
                   </div>
-                </TabsContent>
-              </Tabs>
-            </>
+                  <div className="rounded-xl border border-border bg-card/50 p-5">
+                    <h3 className="font-serif text-lg mb-2">Теневая сторона</h3>
+                    <p className="text-sm text-muted-foreground">{card.shadowSide}</p>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </div>
 
-      {/* Related content */}
       {!isLocked && (
         <div className="mt-12 space-y-10">
           {relatedCards.length > 0 && (
@@ -288,7 +293,6 @@ export default function TarotCardPage({
           )}
         </div>
       )}
-
     </>
   );
 }

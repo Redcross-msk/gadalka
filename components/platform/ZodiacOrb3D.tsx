@@ -13,14 +13,18 @@ interface ZodiacOrb3DProps {
 }
 
 function starAgeYears(star: ConstellationStar): number {
+  if (typeof star.ageMillionYears === "number") return star.ageMillionYears;
   let h = 0;
   for (const c of star.id) h = (h * 33 + c.charCodeAt(0)) >>> 0;
-  // Декоративный «возраст» звезды в млн лет
   return 80 + (h % 920);
 }
 
 function starDisplayName(star: ConstellationStar, index: number): string {
-  return star.label ?? `Звезда ${index + 1}`;
+  return star.name ?? star.label ?? `Звезда ${index + 1}`;
+}
+
+function starTitle(star: ConstellationStar): string | null {
+  return star.title ?? null;
 }
 
 const PLANETS = [
@@ -48,7 +52,6 @@ function ConstellationScene({
 
   return (
     <svg viewBox="0 0 100 100" className="h-full w-full overflow-visible">
-      {/* Орбиты */}
       {[38, 52, 66, 80].map((r) => (
         <circle
           key={r}
@@ -62,14 +65,12 @@ function ConstellationScene({
         />
       ))}
 
-      {/* Солнце */}
       <circle cx="50" cy="50" r="4.2" fill="#f2dfa8" opacity="0.95">
         <animate attributeName="opacity" values="0.75;1;0.75" dur="3.5s" repeatCount="indefinite" />
       </circle>
       <circle cx="50" cy="50" r="7" fill="rgba(242,223,168,0.18)" />
       <circle cx="50" cy="50" r="11" fill="rgba(216,188,120,0.08)" />
 
-      {/* Планеты */}
       {PLANETS.map((p, i) => (
         <g key={i}>
           <animateTransform
@@ -179,6 +180,14 @@ function FullscreenConstellation({
   }, []);
 
   useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  useEffect(() => {
     const tick = () => {
       if (autoSpin.current && pointers.current.size === 0) {
         rotRef.current = {
@@ -255,11 +264,22 @@ function FullscreenConstellation({
     }
   };
 
+  const onWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    autoSpin.current = false;
+    setScale((prev) => Math.min(2.4, Math.max(0.7, prev - e.deltaY * 0.0015)));
+    setTimeout(() => {
+      if (pointers.current.size === 0) autoSpin.current = true;
+    }, 1200);
+  };
+
   const handleStar = useCallback((star: ConstellationStar, index: number) => {
     setSelected({ star, index });
   }, []);
 
   if (typeof document === "undefined") return null;
+
+  const title = selected ? starTitle(selected.star) : null;
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex flex-col touch-none">
@@ -292,9 +312,10 @@ function FullscreenConstellation({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
+        onWheel={onWheel}
       >
         <div
-          className="relative aspect-square w-[min(92vw,520px)]"
+          className="relative aspect-square w-[min(92vw,720px)]"
           style={{ perspective: "900px" }}
         >
           <div
@@ -328,7 +349,10 @@ function FullscreenConstellation({
             <p className="font-serif text-lg text-gold-light">
               {starDisplayName(selected.star, selected.index)}
             </p>
-            <p className="mt-1 text-sm text-cream-muted">
+            {title && (
+              <p className="mt-0.5 text-sm text-cream-muted">{title}</p>
+            )}
+            <p className="mt-1 text-sm text-mist/70">
               Возраст ≈ {starAgeYears(selected.star)} млн лет
             </p>
             <p className="mt-1 text-[11px] text-mist/50">
@@ -337,7 +361,7 @@ function FullscreenConstellation({
           </div>
         ) : (
           <p className="text-center text-[11px] text-mist/55 leading-relaxed">
-            Один палец — вращение · два пальца — масштаб · нажмите на звезду
+            Мышь / палец — вращение · колесо / щипок — масштаб · нажмите на звезду
           </p>
         )}
       </div>
@@ -361,11 +385,7 @@ export function ZodiacOrb3D({ constellation, className }: ZodiacOrb3DProps) {
         )}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        onClick={() => {
-          if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
-            setFullscreen(true);
-          }
-        }}
+        onClick={() => setFullscreen(true)}
         aria-label={`Открыть созвездие ${constellation.constellationName}`}
       >
         <div
@@ -457,7 +477,7 @@ export function ZodiacOrb3D({ constellation, className }: ZodiacOrb3DProps) {
         <p className="mt-1 text-center text-[10px] uppercase tracking-[0.22em] text-gold/55">
           {constellation.constellationName}
         </p>
-        <p className="mt-0.5 text-[9px] text-mist/40 lg:hidden">Нажмите, чтобы открыть</p>
+        <p className="mt-0.5 text-[9px] text-mist/40">Нажмите, чтобы открыть</p>
       </button>
 
       {fullscreen && (

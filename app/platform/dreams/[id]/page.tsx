@@ -98,8 +98,30 @@ export default function DreamDetailPage() {
 
       {dream.analysis && (
         <section className="rounded-xl border border-gold/20 bg-gradient-to-br from-burgundy/10 to-purple-deep/10 p-6 md:p-8 mb-8">
-          <SectionHeader title="Анализ сна" description="Автоматическая интерпретация символов" />
+          <SectionHeader title="Толкование сна" description="Символическая интерпретация по описанию" />
           <p className="text-foreground leading-relaxed mb-6">{dream.analysis.summary}</p>
+
+          {dream.analysis.symbolReadings && dream.analysis.symbolReadings.length > 0 && (
+            <div className="mb-6 space-y-3">
+              <h4 className="text-sm font-medium text-gold mb-2">Найденные символы</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {dream.analysis.symbolReadings.map((reading) => (
+                  <div
+                    key={reading.keyword}
+                    className="rounded-xl border border-border/80 bg-card/40 p-4"
+                  >
+                    <p className="text-xs uppercase tracking-[0.18em] text-gold/55">
+                      {reading.keyword}
+                    </p>
+                    <p className="mt-1 font-serif text-lg text-gold-light">{reading.title}</p>
+                    <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                      {reading.interpretation}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -131,6 +153,12 @@ export default function DreamDetailPage() {
               ))}
             </ul>
           </div>
+
+          {dream.analysis.disclaimer && (
+            <p className="mt-6 text-xs text-muted-foreground/80 leading-relaxed">
+              {dream.analysis.disclaimer}
+            </p>
+          )}
         </section>
       )}
 

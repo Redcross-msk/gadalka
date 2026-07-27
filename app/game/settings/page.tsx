@@ -4,14 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useIdleGameStore, useIdleHydrated } from "@/store/gameStore";
+import { useAppStore } from "@/store/useAppStore";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 
 export default function GameSettingsPage() {
   const hydrated = useIdleHydrated();
   const { settings, updateSettings, resetProgress, applyDemoCode, isPremiumDemo } = useIdleGameStore();
+  const isPremium = useAppStore((s) => s.isPremium);
   const [code, setCode] = useState("");
   const [msg, setMsg] = useState("");
 
@@ -26,12 +29,22 @@ export default function GameSettingsPage() {
         <h1 className="font-serif text-3xl">Настройки</h1>
 
         <div className="mt-8 space-y-5">
-          <Row label="Демо Гадалка+ (премиум-улучшения)">
-            <Switch
-              checked={isPremiumDemo}
-              onCheckedChange={(v) => useIdleGameStore.setState({ isPremiumDemo: v })}
-            />
+          <Row label="Гадалка+ в игре">
+            {isPremium ? (
+              <Badge variant="free">Доступно</Badge>
+            ) : (
+              <Switch
+                checked={isPremiumDemo}
+                onCheckedChange={(v) => useIdleGameStore.setState({ isPremiumDemo: v })}
+                aria-label="Демо премиум"
+              />
+            )}
           </Row>
+          {!isPremium && (
+            <p className="text-[11px] text-muted-foreground -mt-3">
+              Демо-переключатель для тестов. С подпиской функции открываются автоматически.
+            </p>
+          )}
           <Row label="Отключить звук">
             <Switch checked={settings.muted} onCheckedChange={(muted) => updateSettings({ muted })} />
           </Row>

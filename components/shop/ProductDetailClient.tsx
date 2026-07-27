@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
 import { ShoppingCart, ArrowLeft, Star, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { ProductVisual } from "@/components/shop/ProductVisual";
 import { useAppStore } from "@/store/useAppStore";
 import { formatPrice, cn } from "@/lib/utils";
 import type { Product } from "@/types";
+import { addToCartAction } from "@/features/shop/actions";
 
 const categoryLabels: Record<string, string> = {
   cards: "Карты",
@@ -26,9 +27,137 @@ const statusLabels: Record<string, string> = {
   digital: "Цифровой товар",
 };
 
-export function ProductDetailClient({ product }: { product: Product }) {
+function ProductGallery({
+  gallery,
+  productName,
+  category,
+}: {
+  gallery: string[];
+  productName: string;
+  category: Product["category"];
+}) {
   const [activeImage, setActiveImage] = useState(0);
+  const touchRef = useRef<{ x: number; y: number; dragging: boolean } | null>(null);
+  const lockRef = useRef(false);
+  const multi = gallery.length > 1;
+  const currentSrc = gallery[activeImage];
 
+  const goTo = useCallback(
+    (next: number) => {
+      if (!multi) return;
+      const wrapped = ((next % gallery.length) + gallery.length) % gallery.length;
+      setActiveImage(wrapped);
+    },
+    [gallery.length, multi]
+  );
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (!multi) return;
+    const t = e.touches[0];
+    touchRef.current = { x: t.clientX, y: t.clientY, dragging: false };
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!multi) return;
+    const start = touchRef.current;
+    if (!start) return;
+    const t = e.touches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (!start.dragging && Math.abs(dx) > 28 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+      start.dragging = true;
+    }
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!multi) return;
+    const start = touchRef.current;
+    touchRef.current = null;
+    if (!start?.dragging || lockRef.current) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    if (Math.abs(dx) < 48) return;
+    lockRef.current = true;
+    goTo(activeImage + (dx < 0 ? 1 : -1));
+    window.setTimeout(() => {
+      lockRef.current = false;
+    }, 280);
+  };
+
+  const mainImage = (
+    <div
+      className={cn(
+        "glass-card aspect-square rounded-2xl flex items-center justify-center overflow-hidden relative bg-gradient-to-br from-burgundy/10 to-purple-deep/10",
+        multi && "touch-pan-y select-none"
+      )}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={() => {
+        touchRef.current = null;
+      }}
+    >
+      {currentSrc ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={currentSrc}
+          alt={productName}
+          draggable={false}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <ProductVisual category={category} size="lg" />
+      )}
+
+      {multi && (
+        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 lg:hidden pointer-events-none">
+          {gallery.map((_, i) => (
+            <span
+              key={i}
+              className={cn(
+                "h-1.5 w-1.5 rounded-full transition-colors",
+                activeImage === i ? "bg-gold" : "bg-white/40"
+              )}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  if (!multi) {
+    return <div>{mainImage}</div>;
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_5.5rem]">
+      {mainImage}
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide lg:max-h-[min(100%,32rem)] lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden lg:pr-0.5">
+        {gallery.map((img, i) => (
+          <button
+            key={`${img}-${i}`}
+            type="button"
+            onClick={() => setActiveImage(i)}
+            className={cn(
+              "relative shrink-0 overflow-hidden border transition-all",
+              "h-16 w-16 rounded-lg lg:h-20 lg:w-full lg:rounded-xl",
+              activeImage === i
+                ? "border-gold/60 ring-1 ring-gold/30"
+                : "border-border/50 opacity-80 hover:opacity-100"
+            )}
+            aria-label={`Изображение ${i + 1}`}
+            aria-current={activeImage === i}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={img} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function ProductDetailClient({ product }: { product: Product }) {
   const addToCart = useAppStore((s) => s.addToCart);
   const addToast = useAppStore((s) => s.addToast);
   const cart = useAppStore((s) => s.cart);
@@ -41,15 +170,15 @@ export function ProductDetailClient({ product }: { product: Product }) {
         : [];
   const inCart = cart.some((i) => i.productSlug === product.slug);
   const cartQty = cart.find((i) => i.productSlug === product.slug)?.quantity ?? 0;
-  const currentSrc = gallery[activeImage];
 
   const handleAddToCart = () => {
-    addToCart(product.slug);
+    addToCart(product.slug, product.id);
     addToast({
       title: "Добавлено в корзину",
       description: product.name,
       variant: "success",
     });
+    void addToCartAction(product.id, 1).catch(() => undefined);
   };
 
   const avgRating =
@@ -67,39 +196,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
       </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
-        <div>
-          <div className="glass-card aspect-square rounded-2xl flex items-center justify-center overflow-hidden relative bg-gradient-to-br from-burgundy/10 to-purple-deep/10">
-            {currentSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={currentSrc}
-                alt={product.name}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            ) : (
-              <ProductVisual category={product.category} size="lg" />
-            )}
-          </div>
-          {gallery.length > 1 && (
-            <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
-              {gallery.map((img, i) => (
-                <button
-                  key={`${img}-${i}`}
-                  type="button"
-                  onClick={() => setActiveImage(i)}
-                  className={cn(
-                    "h-16 w-16 shrink-0 rounded-lg border overflow-hidden relative transition-all",
-                    activeImage === i ? "border-gold/50" : "border-border/50"
-                  )}
-                  aria-label={`Изображение ${i + 1}`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+        <ProductGallery gallery={gallery} productName={product.name} category={product.category} />
 
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-3">

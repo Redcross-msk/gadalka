@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Lock, Clock, Layers } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Clock, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFreeSpreadCooldown } from "@/hooks/useFreeSpreadCooldown";
 import { formatCooldown } from "@/data/daily";
 import type { Spread } from "@/types";
 import { cn } from "@/lib/utils";
+import { AccessBadge } from "@/components/shared/AccessBadge";
 
 interface SpreadCardProps {
   spread: Spread;
@@ -23,14 +23,7 @@ export function SpreadCard({ spread }: SpreadCardProps) {
         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-burgundy/20 border border-gold/10">
           <Layers className="h-6 w-6 text-gold" />
         </div>
-        {spread.premium ? (
-          <Badge variant="premium">
-            <Lock className="h-3 w-3 mr-1" />
-            Премиум
-          </Badge>
-        ) : (
-          <Badge variant="free">Бесплатно</Badge>
-        )}
+        <AccessBadge requiresPremium={spread.premium} freeLabel="Бесплатно" />
       </div>
       <h3 className="font-serif text-xl group-hover:text-gold transition-colors">{spread.name}</h3>
       <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{spread.description}</p>

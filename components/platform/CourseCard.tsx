@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Lock } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import type { Course } from "@/types";
 import { useAppStore } from "@/store/useAppStore";
+import { AccessBadge } from "@/components/shared/AccessBadge";
 
 interface CourseCardProps {
   course: Course;
@@ -24,11 +23,7 @@ export function CourseCard({ course }: CourseCardProps) {
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-burgundy/20 text-xl">📖</div>
-        {course.premium ? (
-          <Badge variant="premium"><Lock className="h-3 w-3 mr-1" />Премиум</Badge>
-        ) : (
-          <Badge variant="free">Бесплатно</Badge>
-        )}
+        <AccessBadge requiresPremium={course.premium} freeLabel="Бесплатно" />
       </div>
       <h3 className="font-serif text-xl group-hover:text-gold transition-colors">{course.name}</h3>
       <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{course.description}</p>

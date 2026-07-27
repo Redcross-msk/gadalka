@@ -7,13 +7,15 @@ import { PageHeader, SectionHeader } from "@/components/layout/PageHeader";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { TarotCardFlip } from "@/components/tarot/TarotCardFlip";
 import { LockedContent } from "@/components/shared/LockedContent";
+import { AccessBadge } from "@/components/shared/AccessBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { getSpreadBySlug } from "@/data/spreads";
-import { tarotCards, getTarotCardBySlug } from "@/data/tarotCards";
+import { tarotCards, getTarotCardBySlug, getTarotEngineId } from "@/data/tarotCards";
+import { formatInterpretationText, interpretTarot } from "@/data/tarot/interpretationEngine";
 import { sendMessage } from "@/services/interpreter";
 import { useAppStore } from "@/store/useAppStore";
 import { useAuth } from "@/hooks/useHydration";
@@ -111,22 +113,70 @@ export default function SpreadPage({
 
   const handleGetInterpretation = async () => {
     setLoadingInterpretation(true);
-    const cardNames = selectedCards
-      .map((c) => getTarotCardBySlug(c.cardSlug)?.name)
-      .filter(Boolean)
-      .join(", ");
-    const positionNames = selectedCards
-      .map((c) => {
-        const pos = spread.positions.find((p) => p.id === c.positionId);
-        const card = getTarotCardBySlug(c.cardSlug);
-        return `${pos?.name}: ${card?.name}`;
-      })
-      .join("; ");
 
-    const result = await sendMessage(
-      "spread",
-      `Расклад «${spread.name}». Вопрос: ${question}. Позиции: ${positionNames}. Карты: ${cardNames}`
-    );
+    const engineIds = selectedCards
+      .map((c) => getTarotEngineId(c.cardSlug))
+      .filter((id): id is string => Boolean(id));
+
+    let result = "";
+
+    // Движок толкования рассчитан на 1–3 карты (см. README модуля Таро)
+    if (engineIds.length >= 1 && engineIds.length <= 3) {
+      try {
+        const domain =
+          /люб|отнош/i.test(question) || /отнош/i.test(spread.name)
+            ? "love"
+            : /работ|карьер|дел/i.test(question) || /работ|карьер/i.test(spread.name)
+              ? "work"
+              : /деньг|финанс/i.test(question) || /финанс/i.test(spread.name)
+                ? "finance"
+                : /внутр|состоян/i.test(question)
+                  ? "inner"
+                  : "general";
+
+        const interpreted = interpretTarot(engineIds, domain);
+        const positions = selectedCards
+          .map((c) => {
+            const pos = spread.positions.find((p) => p.id === c.positionId);
+            const card = getTarotCardBySlug(c.cardSlug);
+            return pos && card ? `${pos.name} — ${card.name}` : null;
+          })
+          .filter(Boolean)
+          .join("\n");
+
+        result = [
+          `Расклад «${spread.name}»`,
+          question.trim() ? `Вопрос: ${question.trim()}` : null,
+          positions ? `Позиции:\n${positions}` : null,
+          "",
+          formatInterpretationText(interpreted),
+        ]
+          .filter((line) => line !== null)
+          .join("\n");
+      } catch {
+        result = "";
+      }
+    }
+
+    if (!result) {
+      const cardNames = selectedCards
+        .map((c) => getTarotCardBySlug(c.cardSlug)?.name)
+        .filter(Boolean)
+        .join(", ");
+      const positionNames = selectedCards
+        .map((c) => {
+          const pos = spread.positions.find((p) => p.id === c.positionId);
+          const card = getTarotCardBySlug(c.cardSlug);
+          return `${pos?.name}: ${card?.name}`;
+        })
+        .join("; ");
+
+      result = await sendMessage(
+        "spread",
+        `Расклад «${spread.name}». Вопрос: ${question}. Позиции: ${positionNames}. Карты: ${cardNames}`
+      );
+    }
+
     setInterpretation(result);
     setLoadingInterpretation(false);
     setStep("interpretation");
@@ -207,9 +257,7 @@ export default function SpreadPage({
       />
 
       <PageHeader title={spread.name} description={spread.description}>
-        <Badge variant={spread.premium ? "premium" : "free"}>
-          {spread.premium ? "Премиум" : "Бесплатно"}
-        </Badge>
+        <AccessBadge requiresPremium={spread.premium} freeLabel="Бесплатно" />
       </PageHeader>
 
       {/* Spread info */}

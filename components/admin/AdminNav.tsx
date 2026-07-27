@@ -11,7 +11,7 @@ const nav = [
   { href: "/admin/orders", label: "Заказы" },
   { href: "/admin/dreams", label: "Сны" },
   { href: "/admin/game", label: "Игра" },
-  { href: "/admin/activations", label: "Коды" },
+  { href: "/admin/activations", label: "Промокоды" },
   { href: "/admin/media", label: "Медиа" },
   { href: "/admin/audit", label: "Журнал" },
 ];

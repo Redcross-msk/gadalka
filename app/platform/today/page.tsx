@@ -134,17 +134,35 @@ export default function TodayPage() {
                   </div>
 
                   {horoscope && zodiacName ? (
-                    <div className="rounded-xl border border-gold/20 bg-burgundy/10 p-5">
-                      <p className="mb-2 text-[10px] uppercase tracking-[0.28em] text-gold/70">
+                    <div className="rounded-xl border border-gold/20 bg-burgundy/10 p-5 space-y-3">
+                      <p className="text-[10px] uppercase tracking-[0.28em] text-gold/70">
                         Соответствие со знаком · {zodiacName}
                       </p>
                       <p className="text-sm leading-relaxed text-cream/90">
                         Карта «{card.name}» сегодня резонирует с энергией {zodiacName}: тема «
                         {daily.theme}» усиливает то, что уже заложено в вашем гороскопе.
                       </p>
-                      <p className="mt-3 text-sm leading-relaxed text-cream-muted">
-                        {horoscope.text}
+                      <p className="text-sm leading-relaxed text-cream-muted">
+                        {horoscope.sections.general}
                       </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div className="rounded-lg border border-gold/12 bg-black/15 p-3">
+                          <p className="text-[10px] uppercase tracking-[0.16em] text-gold/60 mb-1.5">
+                            Любовь
+                          </p>
+                          <p className="text-xs leading-relaxed text-cream/80 line-clamp-4">
+                            {horoscope.sections.love}
+                          </p>
+                        </div>
+                        <div className="rounded-lg border border-gold/12 bg-black/15 p-3">
+                          <p className="text-[10px] uppercase tracking-[0.16em] text-gold/60 mb-1.5">
+                            Финансы
+                          </p>
+                          <p className="text-xs leading-relaxed text-cream/80 line-clamp-4">
+                            {horoscope.sections.finance}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="rounded-xl border border-gold/15 bg-white/[0.03] p-5">

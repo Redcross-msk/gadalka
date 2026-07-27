@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Crown, Settings } from "lucide-react";
+import { Crown } from "lucide-react";
 import { useIdleGameStore, useIdleHydrated } from "@/store/gameStore";
 import { CabinetScene } from "@/components/game/CabinetScene";
 import { UpgradeShop } from "@/components/game/UpgradeShop";
@@ -14,6 +14,7 @@ import { GeneratedSymbol } from "@/components/game/symbols/GeneratedSymbol";
 import { ScrollAtmosphere } from "@/components/platform/ScrollAtmosphere";
 import { DeckBackButton } from "@/components/layout/DeckBackButton";
 import { useGameDbSync } from "@/hooks/useGameDbSync";
+import { cn } from "@/lib/utils";
 
 export function IdleGameScreen() {
   const hydrated = useIdleHydrated();
@@ -58,7 +59,18 @@ export function IdleGameScreen() {
   const prestigeCheck = store.openPrestige();
 
   return (
-    <div className="relative min-h-dvh min-w-0 overflow-x-clip card-back-surface text-cream">
+    <div
+      className={cn(
+        "relative min-h-dvh min-w-0 overflow-x-clip card-back-surface text-cream game-touch-lock",
+        "select-none [-webkit-user-select:none] [-webkit-touch-callout:none]"
+      )}
+      onContextMenu={(e) => {
+        // Не мешаем полям ввода, если появятся; блокируем выделение на игровом экране
+        const t = e.target as HTMLElement;
+        if (t.closest("input, textarea, a, button")) return;
+        e.preventDefault();
+      }}
+    >
       <ScrollAtmosphere />
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 py-5 sm:py-6 lg:px-10 lg:py-8 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -79,11 +91,6 @@ export function IdleGameScreen() {
               <Link href="/platform/subscription">
                 <Crown className="h-3.5 w-3.5 mr-1.5" />
                 Гадалка+
-              </Link>
-            </Button>
-            <Button variant="ghost" size="icon" asChild aria-label="Настройки" className="h-10 w-10">
-              <Link href="/game/settings">
-                <Settings className="h-4 w-4" />
               </Link>
             </Button>
           </div>

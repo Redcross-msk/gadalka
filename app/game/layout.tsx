@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/require-user";
+import { GameShell } from "@/components/game/GameShell";
 
 export const metadata: Metadata = {
   title: "Кабинет Гадалки",
@@ -8,5 +9,5 @@ export const metadata: Metadata = {
 
 export default async function GameLayout({ children }: { children: React.ReactNode }) {
   await requireUser("/game");
-  return children;
+  return <GameShell>{children}</GameShell>;
 }

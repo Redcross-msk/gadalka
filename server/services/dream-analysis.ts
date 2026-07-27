@@ -1,19 +1,7 @@
 import "server-only";
 
 import type { DreamMood } from "@prisma/client";
-
-const SYMBOL_LEXICON: { key: string; labels: string[]; theme: string }[] = [
-  { key: "вода", labels: ["вода", "река", "море", "озеро", "дождь", "океан"], theme: "эмоции и поток" },
-  { key: "дверь", labels: ["дверь", "врата", "порог", "вход"], theme: "переход и выбор" },
-  { key: "зеркало", labels: ["зеркало", "отражение"], theme: "самопознание" },
-  { key: "дом", labels: ["дом", "квартира", "комната"], theme: "безопасность и корень" },
-  { key: "лес", labels: ["лес", "деревья", "чаща"], theme: "бессознательное" },
-  { key: "птица", labels: ["птица", "ворона", "сова", "голубь"], theme: "послание" },
-  { key: "огонь", labels: ["огонь", "пламя", "свеча", "костёр"], theme: "трансформация" },
-  { key: "дорога", labels: ["дорога", "путь", "тропа", "улица"], theme: "направление жизни" },
-  { key: "ключ", labels: ["ключ", "замок"], theme: "доступ и тайна" },
-  { key: "ребёнок", labels: ["ребёнок", "дети", "малыш"], theme: "начало и уязвимость" },
-];
+import { interpretDream } from "@/data/dreamInterpreter";
 
 const MOOD_EMOTIONS: Record<DreamMood, string[]> = {
   PEACEFUL: ["спокойствие", "принятие", "гармония"],
@@ -54,52 +42,44 @@ export type DreamAnalysisResult = {
   rawMeta: Record<string, unknown>;
 };
 
-function normalize(text: string) {
-  return text.toLowerCase().replace(/ё/g, "е");
-}
-
 export function analyzeDreamContent(input: DreamAnalysisInput): DreamAnalysisResult {
-  const blob = normalize(
-    [input.title, input.description, input.personalNote ?? "", ...input.symbols, ...input.places, ...input.characters].join(" ")
+  const blob = [input.title, input.description, input.personalNote ?? "", ...input.places, ...input.characters].join(
+    " "
   );
 
-  const foundFromText: string[] = [];
-  const themes = new Set<string>();
+  const interpreted = interpretDream(blob);
+  const symbolReadings = interpreted.symbols;
+  const foundSymbols = [
+    ...symbolReadings.map((s) => s.keyword),
+    ...input.symbols.filter(Boolean),
+  ].filter((v, i, arr) => arr.indexOf(v) === i);
 
-  for (const entry of SYMBOL_LEXICON) {
-    if (entry.labels.some((l) => blob.includes(l))) {
-      foundFromText.push(entry.key);
-      themes.add(entry.theme);
-    }
-  }
-
-  for (const s of input.symbols) {
-    const n = normalize(s);
-    if (n && !foundFromText.includes(n)) foundFromText.push(s);
-  }
-
+  const themes = new Set<string>(symbolReadings.map((s) => s.title));
   if (input.recurring) themes.add("повторяющийся сюжет");
   if (input.characters.length) themes.add("фигуры отношений");
   if (input.places.length) themes.add("пространство сна");
 
   const emotions = [...MOOD_EMOTIONS[input.mood]];
-  if (foundFromText.includes("вода")) emotions.push("глубина чувств");
-  if (foundFromText.includes("дверь")) emotions.push("готовность к шагу");
+  if (symbolReadings.some((s) => s.keyword === "вода" || s.keyword === "море" || s.keyword === "река")) {
+    emotions.push("глубина чувств");
+  }
+  if (symbolReadings.some((s) => s.keyword === "дверь" || s.keyword === "мост")) {
+    emotions.push("готовность к шагу");
+  }
+  if (symbolReadings.some((s) => s.keyword === "падаю" || s.keyword === "страшно")) {
+    emotions.push("тревога");
+  }
 
   const uniqueEmotions = [...new Set(emotions)].slice(0, 6);
-  const themeList = [...themes].slice(0, 6);
-  const symbolsList = foundFromText.slice(0, 10);
+  const themeList = [...themes].slice(0, 8);
+  const symbolsList = foundSymbols.slice(0, 12);
 
   const summaryParts = [
-    `Сон «${input.title}» несёт ${input.mood === "ANXIOUS" || input.mood === "SAD" ? "напряжённый" : "живой"} отклик.`,
-    symbolsList.length
-      ? `Ключевые образы: ${symbolsList.slice(0, 4).join(", ")}.`
-      : "Прямых символов из словаря мало — важнее общее настроение и детали, которые вы отметили.",
-    themeList.length ? `Темы: ${themeList.slice(0, 3).join("; ")}.` : "",
+    interpreted.summary,
     input.recurring
       ? "Повторяемость намекает, что психика возвращается к незавершённому опыту."
       : "Это разовый сюжет — полезно сравнить его с событиями дня.",
-  ].filter(Boolean);
+  ];
 
   const questions = [
     "Какое чувство осталось сразу после пробуждения?",
@@ -124,8 +104,10 @@ export function analyzeDreamContent(input: DreamAnalysisInput): DreamAnalysisRes
     questions,
     toneScore,
     rawMeta: {
-      engine: "rule-lexicon-v1",
-      symbolHits: foundFromText.length,
+      engine: "dream-interpreter-v1",
+      disclaimer: interpreted.disclaimer,
+      symbolReadings,
+      symbolHits: symbolReadings.length,
       mood: input.mood,
     },
   };

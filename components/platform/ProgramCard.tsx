@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Lock, Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Calendar } from "lucide-react";
 import type { Program } from "@/types";
+import { AccessBadge } from "@/components/shared/AccessBadge";
 
 interface ProgramCardProps {
   program: Program;
@@ -19,16 +19,11 @@ export function ProgramCard({ program }: ProgramCardProps) {
         <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg bg-purple-deep/30 text-lg sm:text-xl shrink-0">
           ✨
         </div>
-        {program.premium ? (
-          <Badge variant="premium" className="text-[10px] sm:text-xs">
-            <Lock className="h-3 w-3 mr-1" />
-            Премиум
-          </Badge>
-        ) : (
-          <Badge variant="free" className="text-[10px] sm:text-xs">
-            Бесплатно
-          </Badge>
-        )}
+        <AccessBadge
+          requiresPremium={program.premium}
+          freeLabel="Бесплатно"
+          className="text-[10px] sm:text-xs"
+        />
       </div>
       <h3 className="font-serif text-lg sm:text-xl group-hover:text-gold transition-colors leading-snug">
         {program.name}

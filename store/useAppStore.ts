@@ -9,6 +9,7 @@ import type {
   SavedDailyCardEntry,
   ChatSession,
   CartItem,
+  AppliedShopPromo,
   ActivatedCode,
   CourseProgress,
   ProgramProgress,
@@ -82,10 +83,13 @@ interface AppState {
 
   // Cart
   cart: CartItem[];
-  addToCart: (productSlug: string) => void;
+  appliedPromo: AppliedShopPromo | null;
+  addToCart: (productSlug: string, productId?: string) => void;
   removeFromCart: (productSlug: string) => void;
   updateCartQuantity: (productSlug: string, quantity: number) => void;
+  setCart: (items: CartItem[]) => void;
   clearCart: () => void;
+  setAppliedPromo: (promo: AppliedShopPromo | null) => void;
 
   // Activation
   activatedCodes: ActivatedCode[];
@@ -121,6 +125,7 @@ export const useAppStore = create<AppState>()(
       notes: [],
       chatSessions: [],
       cart: [],
+      appliedPromo: null,
       activatedCodes: [],
       toasts: [],
       _hasHydrated: false,
@@ -376,19 +381,25 @@ export const useAppStore = create<AppState>()(
           ),
         })),
 
-      addToCart: (productSlug) =>
+      addToCart: (productSlug, productId) =>
         set((s) => {
           const existing = s.cart.find((i) => i.productSlug === productSlug);
           if (existing) {
             return {
               cart: s.cart.map((i) =>
                 i.productSlug === productSlug
-                  ? { ...i, quantity: i.quantity + 1 }
+                  ? {
+                      ...i,
+                      quantity: i.quantity + 1,
+                      productId: productId ?? i.productId,
+                    }
                   : i
               ),
             };
           }
-          return { cart: [...s.cart, { productSlug, quantity: 1 }] };
+          return {
+            cart: [...s.cart, { productSlug, productId, quantity: 1 }],
+          };
         }),
 
       removeFromCart: (productSlug) =>
@@ -406,7 +417,11 @@ export const useAppStore = create<AppState>()(
                 ),
         })),
 
-      clearCart: () => set({ cart: [] }),
+      setCart: (items) => set({ cart: items }),
+
+      clearCart: () => set({ cart: [], appliedPromo: null }),
+
+      setAppliedPromo: (promo) => set({ appliedPromo: promo }),
 
       activateCode: (code) => {
         const codes: Record<string, string> = {
@@ -467,6 +482,7 @@ export const useAppStore = create<AppState>()(
         notes: state.notes,
         chatSessions: state.chatSessions,
         cart: state.cart,
+        appliedPromo: state.appliedPromo,
         activatedCodes: state.activatedCodes,
       }),
       onRehydrateStorage: () => (state) => {

@@ -94,17 +94,21 @@ export const useIdleGameStore = create<GameStore>()(
       clickBook: () => {
         const state = get();
         idleAudio.unlock();
-        if (state.settings.clickSounds) idleAudio.play("click");
-
         const now = Date.now();
         let combo = state.clickCombo;
         if (now - state.lastClickAt <= COMBO_WINDOW) combo += 1;
         else combo = 1;
 
+        // Звук не на каждый тап — меньше подвисаний на телефоне
+        if (state.settings.clickSounds && (combo === 1 || combo % 3 === 0)) {
+          idleAudio.play("click");
+        }
+
         const withCombo = { ...state, clickCombo: combo, lastClickAt: now };
         const { energyPerClick } = deriveIncomes(withCombo);
         const gained = energyPerClick;
-        const xpBatch = (state.totalClicks + 1) % 25 === 0 ? 3 : 0;
+        const nextClicks = state.totalClicks + 1;
+        const xpBatch = nextClicks % 25 === 0 ? 3 : 0;
         const leveled = grantXp(state, xpBatch);
 
         let next: GameState = {
@@ -112,7 +116,7 @@ export const useIdleGameStore = create<GameStore>()(
           ...leveled,
           energy: state.energy + gained,
           totalEnergyEarned: state.totalEnergyEarned + gained,
-          totalClicks: state.totalClicks + 1,
+          totalClicks: nextClicks,
           sessionClicks: state.sessionClicks + 1,
           clickCombo: combo,
           maxClickCombo: Math.max(state.maxClickCombo, combo),
@@ -122,8 +126,20 @@ export const useIdleGameStore = create<GameStore>()(
             dayCombo: Math.max(state.metrics.dayCombo ?? 0, combo),
           },
         };
-        next.achievements = syncAchievements(next);
-        next.dailyTasks = syncDailyProgress(next);
+        // Тяжёлый sync не на каждый клик — книга не «замирает» при спаме
+        const milestone =
+          combo === 10 ||
+          combo === 25 ||
+          combo === 50 ||
+          combo === 100 ||
+          combo === 250 ||
+          combo === 500 ||
+          combo === 1000 ||
+          nextClicks % 8 === 0;
+        if (milestone) {
+          next.achievements = syncAchievements(next);
+          next.dailyTasks = syncDailyProgress(next);
+        }
         set(next);
         return gained;
       },

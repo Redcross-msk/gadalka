@@ -12,7 +12,10 @@ export default async function AdminProductsPage({
 }) {
   const sp = await searchParams;
   const products = await prisma.product.findMany({
-    include: { coverMedia: true },
+    include: {
+      coverMedia: true,
+      images: { include: { media: true }, orderBy: { sortOrder: "asc" } },
+    },
     orderBy: [{ sortOrder: "asc" }, { updatedAt: "desc" }],
   });
 
